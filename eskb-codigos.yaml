@@ -1,0 +1,174 @@
+- id: "20250615-221018"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação de Camada de Cache com Redis para Otimização de API"
+  descricao: |
+    Para mitigar a latência e os custos associados a chamadas repetidas à API externa de consulta de CNPJ, foi implementada uma camada de cache utilizando Redis. 
+    A solução envolve uma classe de abstração `RedisCache` que encapsula a lógica de comunicação com o Redis (get/set). O `ServicoCRM` foi refatorado para, antes de consultar a API externa, verificar se os dados para um determinado CNPJ já existem no cache. Em caso afirmativo, os dados são retornados diretamente do cache. Caso contrário, a API é consultada e o resultado é armazenado no cache com uma expiração definida (TTL de 24 horas), para otimizar requisições futuras.
+  componentes_afetados:
+    - "src/aurora/cache/redis_cache.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet do servico_crm.py demonstrando o uso do cache
+    
+    # ...
+    # Verificação de cache antes da chamada externa.
+    cache_key = f"cnpj:{cnpj_limpo}"
+    cached_data = await self.cache.get(cache_key)
+    
+    if cached_data:
+        logger.info(f"Dados do CNPJ {cnpj_limpo} encontrados no cache")
+        data = cached_data
+    else:
+        logger.info(f"Dados do CNPJ {cnpj_limpo} não encontrados no cache. Buscando na API externa.")
+        data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+        # Armazenamento do novo resultado no cache por 24 horas.
+        await self.cache.set(cache_key, data, expire=86400)
+    # ...
+
+    - id: "20250615-222201"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação do Padrão Repository para Acesso a Dados"
+  descricao: |
+    Problema: A análise inicial identificou uma "Ausência de Camada de Abstração", com acesso direto ao banco de dados nos serviços. Isso acopla a lógica de negócio à implementação do banco de dados (SQLAlchemy), dificultando a manutenção e os testes.
+    
+    Solução: Foi implementado o Padrão Repository. Uma nova camada `repositories` foi criada para encapsular toda a lógica de acesso ao banco de dados. Os serviços agora dependem da interface do repositório, e não mais da sessão do SQLAlchemy diretamente, tornando o código mais limpo e testável.
+  componentes_afetados:
+    - "src/aurora/repositories/cliente_repository.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # src/aurora/repositories/cliente_repository.py
+    class ClienteRepository:
+        def __init__(self, db: Session):
+            self.db = db
+        
+        def get_by_cnpj(self, cnpj: str) -> Optional[ClienteDB]:
+            return self.db.query(ClienteDB).filter(ClienteDB.cnpj == cnpj).first()
+        
+        def create(self, cliente_data: dict) -> ClienteDB:
+            db_cliente = ClienteDB(**cliente_data)
+            self.db.add(db_cliente)
+            self.db.commit()
+            self.db.refresh(db_cliente)
+            return db_cliente
+- id: "20250615-222202"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Abstração de API Externa com Padrão Provider"
+  descricao: |
+    Problema: A análise inicial apontou uma "Dependência Direta de APIs Externas", com a lógica de chamada à API do CNPJá misturada dentro da camada de serviço. Isso dificulta a substituição do provedor e os testes.
+
+    Solução: Foi criada uma camada de abstração em `integrations` com uma classe `CNPJProvider`. O `ServicoCRM` agora recebe o provedor via injeção de dependência e delega a ele a responsabilidade da chamada, tornando o serviço agnóstico à implementação da API e facilmente testável com mocks.
+  componentes_afetados:
+    - "src/aurora/integrations/cnpj_provider.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    class ServicoCRM:
+        def __init__(
+            self, 
+            db: Session = Depends(get_db_session),
+            cnpj_provider: CNPJaProvider = Depends(),
+            # ...
+        ):
+            self.cliente_repo = ClienteRepository(db)
+            self.cnpj_provider = cnpj_provider
+            # ...
+        
+        async def create_cliente_from_cnpj(self, cnpj: str):
+            # ...
+            data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+            # ...
+- id: "20250615-222203"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação de Camada de Cache com Redis"
+  descricao: |
+    Problema: A análise recomendou "Adicionar camada de cache para reduzir dependência de APIs externas", pois consultas repetidas à API de CNPJ geravam custos e latência desnecessários.
+
+    Solução: Foi criada uma classe `RedisCache` em `src/aurora/cache/` para gerenciar a interação com o Redis. O `ServicoCRM` foi modificado para primeiro consultar o cache. Se os dados existirem, a chamada à API externa é evitada. Se não, os dados são buscados na API e então armazenados no cache para otimizar futuras requisições.
+  componentes_afetados:
+    - "src/aurora/cache/redis_cache.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    # ...
+    cache_key = f"cnpj:{cnpj_limpo}"
+    cached_data = await self.cache.get(cache_key)
+    
+    if cached_data:
+        data = cached_data
+    else:
+        data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+        await self.cache.set(cache_key, data, expire=86400)
+    # ...
+
+    - id: "20250615-222755"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação do Padrão Repository para Acesso a Dados"
+  descricao: |
+    Problema: A análise inicial do backend identificou uma "Ausência de Camada de Abstração", com acesso direto ao banco de dados nos serviços. Isso acoplava a lógica de negócio à implementação do banco de dados (SQLAlchemy), dificultando a manutenção e os testes unitários.
+    
+    Solução: Foi implementado o Padrão Repository. Uma nova camada `src/aurora/repositories` foi criada para encapsular toda a lógica de acesso ao banco de dados. Os serviços, como o `ServicoCRM`, agora dependem da interface do repositório (`ClienteRepository`), e não mais da sessão do SQLAlchemy diretamente, tornando o código mais limpo, testável e desacoplado.
+  componentes_afetados:
+    - "src/aurora/repositories/cliente_repository.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # src/aurora/repositories/cliente_repository.py
+    class ClienteRepository:
+        def __init__(self, db: Session):
+            self.db = db
+        
+        def get_by_cnpj(self, cnpj: str) -> Optional[ClienteDB]:
+            return self.db.query(ClienteDB).filter(ClienteDB.cnpj == cnpj).first()
+        
+        def create(self, cliente_data: dict) -> ClienteDB:
+            db_cliente = ClienteDB(**cliente_data)
+            self.db.add(db_cliente)
+            self.db.commit()
+            self.db.refresh(db_cliente)
+            return db_cliente
+- id: "20250615-222756"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Abstração de API Externa com Padrão Provider"
+  descricao: |
+    Problema: A análise inicial apontou uma "Dependência Direta de APIs Externas", com a lógica de chamada à API do CNPJá misturada dentro da camada de serviço. Isso dificultava a substituição do provedor e a simulação (mock) da API em testes.
+
+    Solução: Foi criada uma camada de abstração em `src/aurora/integrations` com uma classe `CNPJProvider`. O `ServicoCRM` agora recebe o provedor via injeção de dependência do FastAPI e delega a ele a responsabilidade da chamada, tornando o serviço agnóstico à implementação da API e facilmente testável.
+  componentes_afetados:
+    - "src/aurora/integrations/cnpj_provider.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    class ServicoCRM:
+        def __init__(
+            self, 
+            db: Session = Depends(get_db_session),
+            cnpj_provider: CNPJaProvider = Depends(),
+            # ...
+        ):
+            self.cliente_repo = ClienteRepository(db)
+            self.cnpj_provider = cnpj_provider
+            # ...
+        
+        async def create_cliente_from_cnpj(self, cnpj: str):
+            # ...
+            data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+            # ...
+- id: "20250615-222757"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação de Camada de Cache com Redis"
+  descricao: |
+    Problema: A análise recomendou "Adicionar camada de cache para reduzir dependência de APIs externas", pois consultas repetidas à API de CNPJ geravam custos e latência desnecessários.
+
+    Solução: Foi criada uma classe `RedisCache` em `src/aurora/cache/` para gerenciar a interação com o Redis. O `ServicoCRM` foi modificado para primeiro consultar o cache. Se os dados existirem, a chamada à API externa é evitada. Se não, os dados são buscados na API e então armazenados no cache com uma expiração definida (TTL de 24 horas), otimizando requisições futuras e aumentando a resiliência.
+  componentes_afetados:
+    - "src/aurora/cache/redis_cache.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    cache_key = f"cnpj:{cnpj_limpo}"
+    cached_data = await self.cache.get(cache_key)
+    
+    if cached_data:
+        data = cached_data
+    else:
+        data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+        await self.cache.set(cache_key, data, expire=86400)

@@ -1,0 +1,225 @@
+Compreendido! O próximo passo é criar um novo arquivo ESKB (Enhanced Solutions Knowledge Base) focado em documentar a arquitetura atual da Aurora e o registro de melhorias e funcionalidades adicionadas. Este servirá como um "manual de consciência" do projeto, complementando o ESKB de erros/soluções já existente.
+
+Este novo ESKB será crucial para:
+
+* **Visão Holística:** Ter uma documentação viva da arquitetura e dos componentes da Aurora.
+* **Gestão de Melhorias:** Registrar as funcionalidades implementadas e suas justificativas.
+* **Consistência:** Garantir que todos os envolvidos no projeto tenham uma compreensão unificada do sistema.
+* **Tomada de Decisão:** Fornecer um histórico claro das decisões de design e implementação.
+* **Onboarding:** Facilitar a entrada de novos membros na equipe.
+
+**Proposta para o novo arquivo ESKB: "ESKB - Arquitetura e Evolução da Aurora"**
+
+Este documento terá uma estrutura que abrange desde a visão geral até os detalhes de cada funcionalidade e melhoria.
+
+---
+
+**ESKB - Arquitetura e Evolução da Aurora**
+
+**Versão:** 1.0
+**Data de Criação:** 15 de Junho de 2025
+**Responsável:** Equipe de Desenvolvimento Aurora
+
+---
+
+**1. Visão Geral da Aurora**
+    * **1.1. Propósito e Missão:** Resumo do objetivo principal da Aurora (assistente de IA multifacetada, secretária executiva conversacional, etc.).
+    * **1.2. Arquitetura de Alto Nível:** Diagrama conceitual ou descrição textual dos principais módulos e como eles interagem (e.g., Módulo de PLN, Módulo de Agência/Orquestração, Módulo de Integração de APIs, Base de Conhecimento RAG, Camada de Persistência de Dados).
+    * **1.3. Princípios de Design:** (e.g., Modularidade, Escalabilidade, Segurança, Conversacionalidade, Otimização de Custo/Performance).
+
+**2. Componentes e Módulos Centrais**
+    * **2.1. Módulo de Processamento de Linguagem Natural (PLN):**
+        * **2.1.1. Reconhecimento de Intenção:**
+            * **Descrição:** Como a Aurora identifica a intenção do usuário (ex: cadastrar empresa, agendar reunião).
+            * **Modelos/Técnicas:** Mencionar modelos utilizados (ex: BERTimbau fine-tuned), pipeline de processamento.
+            * **Exemplos de Intenções Mapeadas:** (e.g., `CADASTRAR_EMPRESA`, `CADASTRAR_CONTATO`, `BUSCAR_INFORMACAO`).
+        * **2.1.2. Reconhecimento de Entidades Nomeadas (NER):**
+            * **Descrição:** Como a Aurora extrai informações-chave (ex: CNPJ, nomes, datas).
+            * **Modelos/Técnicas:** Mencionar modelos (ex: SpaCy, Transformers), tipos de entidades reconhecidas.
+            * **Exemplos de Entidades:** (e.g., `CNPJ`, `NOME_EMPRESA`, `TELEFONE`, `ENDERECO`).
+        * **2.1.3. Geração de Linguagem Natural (NLG):**
+            * **Descrição:** Como a Aurora formula suas respostas de forma natural e engajadora.
+            * **Diretrizes de Tom/Estilo:** (e.g., Proativa, Empática, Clara).
+
+    * **2.2. Módulo de Agência e Orquestração (ReAct/CoT):**
+        * **2.2.1. Mecanismo de Raciocínio (CoT):**
+            * **Descrição:** Detalhes sobre como a Aurora desdobra tarefas complexas em passos lógicos (ex: fluxo de cadastro de empresa).
+            * **Exemplos de Fluxos:** (e.g., Cadastro de Empresa, Agendamento de Tarefa).
+        * **2.2.2. Interação com Ferramentas/APIs (ReAct):**
+            * **Descrição:** Como a Aurora seleciona e utiliza ferramentas externas (APIs).
+            * **API CNPJá:** Detalhes da integração (endpoint, parâmetros, tratamento de resposta, autenticação).
+            * **Outras APIs:** Listar futuras integrações.
+
+    * **2.3. Base de Conhecimento (RAG):**
+        * **2.3.1. Estrutura:** Como o conhecimento é armazenado (ex: Banco de Dados Vetorial, outros bancos de dados).
+        * **2.3.2. Mecanismo de Recuperação:** Como a Aurora busca informações relevantes para fundamentar suas respostas.
+        * **2.3.3. Fontes de Dados:** Documentos, histórico de interações, etc.
+
+    * **2.4. Camada de Persistência de Dados:**
+        * **2.4.1. Banco de Dados Primário:** (e.g., PostgreSQL, MongoDB).
+        * **2.4.2. Gerenciamento de Estado da Conversa:** Como o contexto é mantido entre as interações.
+
+**3. Registro de Melhorias e Funcionalidades (Log de Evolução)**
+    * **Formato de Entrada:**
+        * **ID da Melhoria/Funcionalidade:** (e.g., #FEAT-001, #ENH-005, #FIX-010)
+        
+        * **Título:** Breve descrição da funcionalidade/melhoria.
+        * **Data de Implementação:**
+        * **Descrição Detalhada:**
+            * **Problema/Oportunidade Endereçada:** Por que esta melhoria foi feita.
+            * **Solução Implementada:** Como a Aurora foi modificada.
+            * **Impacto Esperado:** Benefícios para o usuário ou para o sistema.
+            * **Componentes Afetados:** Quais módulos foram alterados (ex: PLN, Agência, API CNPJá).
+            * **Testes Realizados:**
+            * **Observações/Decisões de Design:** Qualquer trade-off ou escolha importante.
+        * **Links Relacionados:** (e.g., para o código-fonte, tickets de desenvolvimento, documentação específica).
+
+        * **Exemplo de Entrada (Cadastro de Empresa):**
+        * **ID:** #FEAT-001
+        * **Título:** Implementação do Fluxo de Cadastro Conversacional de Empresa via CNPJ
+        * **Data de Implementação:** 15 de Junho de 2025
+        * **Descrição Detalhada:**
+            * **Problema/Oportunidade Endereçada:** Necessidade de transicionar de interface de botões para interação conversacional para cadastro de empresas, melhorando a experiência do usuário e mimetizando uma secretária executiva.
+            * **Solução Implementada:**
+                * Desenvolvido um fluxo conversacional multi-etapas para o cadastro.
+                * Integrado com a API CNPJá para pré-preenchimento de dados.
+                * Adicionado mecanismo de validação e edição de dados pelo usuário.
+                * Aprimorada a compreensão de intenção e extração de CNPJ (PLN).
+            * **Impacto Esperado:** Maior satisfação do usuário, processo de cadastro mais eficiente e intuitivo, redução de erros de entrada manual.
+            * **Componentes Afetados:** Módulo PLN (Intenção, NER), Módulo de Agência (Orquestração do fluxo), Módulo de Integração (API CNPJá), Camada de Persistência.
+            * **Testes Realizados:** Testes unitários para extração de CNPJ, testes de integração com API, testes end-to-end do fluxo conversacional.
+            * **Observações/Decisões de Design:** Decisão de priorizar a consulta via CNPJ como primeira etapa devido à automação e redução da carga do usuário. Implementação de ciclos de validação para garantir a precisão dos dados.
+        * **Links Relacionados:** [Link para o prompt da Aurora], [Link para o código do módulo de cadastro], [Link para a documentação da API CNPJá].
+
+---
+
+**Próximo Passo:** Solicito a sua validação sobre a estrutura proposta para este novo arquivo ESKB. Uma vez aprovada, começarei a popular a seção de "Registro de Melhorias e Funcionalidades" com as informações sobre o fluxo de cadastro de empresa que já discutimos.
+
+Documento de Análise de Conformidade (v1.0)
+Repositório	Status de Conformidade	Análise (Pontos Positivos)	Pontos de Melhoria (Ações para [F1-T02])
+aurora-core	PARCIALMENTE CONFORME	Já possui uma estrutura src/ e tests/. O README.md está bem definido.	A estrutura interna de src/ não segue o padrão aurora/<módulo>. Falta um diretório docs/.
+aurora-crm-frontend	REQUER ATENÇÃO	Utiliza React com uma estrutura de componentes.	Os arquivos de código estão misturados no diretório src/ sem uma organização clara por funcionalidade (ex: components/, services/, hooks/). Nomenclatura de componentes é inconsistente.
+aurora-marketing-service	REQUER ATENÇÃO	Repositório criado, mas a estrutura está vazia.	Estrutura completa do Manual precisa ser criada do zero (src/aurora/marketing, tests/, docs/, etc.).
+aurora-legal-service	REQUÊNCIA ATENÇÃO	Repositório criado, mas a estrutura está vazia.	Estrutura completa do Manual precisa ser criada do zero, com atenção especial para um diretório data/ para o dataset de treinamento.
+aurora-site	CONFORME	Repositório simples e bem estruturado para uma aplicação web estática/simples.	Nenhuma ação necessária para o MVP.
+
+- id: "20250615-222756"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Abstração de API Externa com Padrão Provider"
+  descricao: |
+    Problema: A análise inicial apontou uma "Dependência Direta de APIs Externas", com a lógica de chamada à API do CNPJá misturada dentro da camada de serviço. Isso dificultava a substituição do provedor e a simulação (mock) da API em testes.
+
+    Solução: Foi criada uma camada de abstração em `src/aurora/integrations` com uma classe `CNPJProvider`. O `ServicoCRM` agora recebe o provedor via injeção de dependência do FastAPI e delega a ele a responsabilidade da chamada, tornando o serviço agnóstico à implementação da API e facilmente testável.
+  componentes_afetados:
+    - "src/aurora/integrations/cnpj_provider.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    class ServicoCRM:
+        def __init__(
+            self, 
+            db: Session = Depends(get_db_session),
+            cnpj_provider: CNPJaProvider = Depends(),
+            # ...
+        ):
+            self.cliente_repo = ClienteRepository(db)
+            self.cnpj_provider = cnpj_provider
+            # ...
+        
+        async def create_cliente_from_cnpj(self, cnpj: str):
+            # ...
+            data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+            # ...
+- id: "20250615-222757"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação de Camada de Cache com Redis"
+  descricao: |
+    Problema: A análise recomendou "Adicionar camada de cache para reduzir dependência de APIs externas", pois consultas repetidas à API de CNPJ geravam custos e latência desnecessários.
+
+    Solução: Foi criada uma classe `RedisCache` em `src/aurora/cache/` para gerenciar a interação com o Redis. O `ServicoCRM` foi modificado para primeiro consultar o cache. Se os dados existirem, a chamada à API externa é evitada. Se não, os dados são buscados na API e então armazenados no cache com uma expiração definida (TTL de 24 horas), otimizando requisições futuras e aumentando a resiliência.
+  componentes_afetados:
+    - "src/aurora/cache/redis_cache.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    cache_key = f"cnpj:{cnpj_limpo}"
+    cached_data = await self.cache.get(cache_key)
+    
+    if cached_data:
+        data = cached_data
+    else:
+        data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+        await self.cache.set(cache_key, data, expire=86400)
+
+        - id: "20250616-071010"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação do Padrão Repository para Acesso a Dados"
+  descricao: |
+    Problema: A análise inicial do backend identificou uma "Ausência de Camada de Abstração", com acesso direto ao banco de dados nos serviços. Isso acoplava a lógica de negócio à implementação do banco de dados (SQLAlchemy), dificultando a manutenção e os testes unitários.
+    
+    Solução: Foi implementado o Padrão Repository. Uma nova camada `src/aurora/repositories` foi criada para encapsular toda a lógica de acesso ao banco de dados. Os serviços, como o `ServicoCRM`, agora dependem da interface do repositório (`ClienteRepository`), e não mais da sessão do SQLAlchemy diretamente, tornando o código mais limpo, testável e desacoplado.
+  componentes_afetados:
+    - "src/aurora/repositories/cliente_repository.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # src/aurora/repositories/cliente_repository.py
+    class ClienteRepository:
+        def __init__(self, db: Session):
+            self.db = db
+        
+        def get_by_cnpj(self, cnpj: str) -> Optional[ClienteDB]:
+            return self.db.query(ClienteDB).filter(ClienteDB.cnpj == cnpj).first()
+        
+        def create(self, cliente_data: dict) -> ClienteDB:
+            db_cliente = ClienteDB(**cliente_data)
+            self.db.add(db_cliente)
+            self.db.commit()
+            self.db.refresh(db_cliente)
+            return db_cliente
+- id: "20250616-071011"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Abstração de API Externa com Padrão Provider"
+  descricao: |
+    Problema: A análise inicial apontou uma "Dependência Direta de APIs Externas", com a lógica de chamada à API do CNPJá misturada dentro da camada de serviço. Isso dificultava a substituição do provedor e a simulação (mock) da API em testes.
+
+    Solução: Foi criada uma camada de abstração em `src/aurora/integrations` com uma classe `CNPJProvider`. O `ServicoCRM` agora recebe o provedor via injeção de dependência do FastAPI e delega a ele a responsabilidade da chamada, tornando o serviço agnóstico à implementação da API e facilmente testável.
+  componentes_afetados:
+    - "src/aurora/integrations/cnpj_provider.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    class ServicoCRM:
+        def __init__(
+            self, 
+            db: Session = Depends(get_db_session),
+            cnpj_provider: CNPJaProvider = Depends(),
+            # ...
+        ):
+            self.cliente_repo = ClienteRepository(db)
+            self.cnpj_provider = cnpj_provider
+            # ...
+        
+        async def create_cliente_from_cnpj(self, cnpj: str):
+            # ...
+            data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+            # ...
+- id: "20250616-071012"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Implementação de Camada de Cache com Redis"
+  descricao: |
+    Problema: A análise recomendou "Adicionar camada de cache para reduzir dependência de APIs externas", pois consultas repetidas à API de CNPJ geravam custos e latência desnecessários.
+
+    Solução: Foi criada uma classe `RedisCache` em `src/aurora/cache/` para gerenciar a interação com o Redis. O `ServicoCRM` foi modificado para primeiro consultar o cache. Se os dados existirem, a chamada à API externa é evitada. Se não, os dados são buscados na API e então armazenados no cache com uma expiração definida (TTL de 24 horas), para otimizar requisições futuras e aumentar a resiliência.
+  componentes_afetados:
+    - "src/aurora/cache/redis_cache.py"
+    - "src/aurora/services/servico_crm.py"
+  codigo_exemplo: |
+    # Snippet de src/aurora/services/servico_crm.py
+    cache_key = f"cnpj:{cnpj_limpo}"
+    cached_data = await self.cache.get(cache_key)
+    
+    if cached_data:
+        data = cached_data
+    else:
+        data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+        await self.cache.set(cache_key, data, expire=86400)

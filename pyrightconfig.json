@@ -1,0 +1,20 @@
+{
+    "include": [
+        "src",
+        "tests",
+        "*.py"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".venv"
+    ],
+    "ignore": [
+        "src/aurora/models/cliente_models.py"
+    ],
+    "reportMissingImports": false,
+    "reportMissingTypeStubs": false,
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Windows",
+    "typeCheckingMode": "off"
+}
