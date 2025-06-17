@@ -82,6 +82,14 @@ Garanta a robustez e a rastreabilidade.
 * **Logging Detalhado:** Implemente um logging robusto (ex: biblioteca `logging` do Python) para registrar eventos importantes, erros e informações de depuração. Logs de nível apropriado (DEBUG, INFO, WARNING, ERROR, CRITICAL) devem ser usados.
 * **Logs de Raciocínio de IA:** Para componentes de IA (especialmente agentes ReAct e CoT), registre as etapas de raciocínio e as decisões tomadas para facilitar a depuração e o entendimento do comportamento do modelo.
 
-Ao seguir estas diretrizes expandidas, o Codex terá um mapa muito mais claro e detalhado para construir a inteligência da Aurora de forma alinhada com os padrões de excelência que buscamos.
+## 9. Segurança Avançada
 
-Por favor, substitua o conteúdo do seu `AGENTS.md` por esta versão e confirme quando o fizer.
+Implemente medidas de segurança avançadas para proteger dados e usuários.
+
+* **Autenticação de Dois Fatores (2FA):** Utilize o módulo `auth/two_factor.py` para implementar 2FA em operações sensíveis.
+* **Testes de Penetração:** Execute regularmente o script `security/penetration_test.py` para identificar vulnerabilidades.
+* **CI/CD com Verificações de Segurança:** Utilize o workflow definido em `.github/workflows/security-checks.yml` para verificações automáticas.
+* **Plano de Resposta a Incidentes:** Siga o plano definido em `security/incident_response_plan.md` em caso de incidentes.
+* **Atualização de Dependências:** Use o script `security/dependency_updater.py` para manter dependências atualizadas e livres de vulnerabilidades.
+
+Ao seguir estas diretrizes expandidas, o Codex terá um mapa muito mais claro e detalhado para construir a inteligência da Aurora de forma alinhada com os padrões de excelência que buscamos.

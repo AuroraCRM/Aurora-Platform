@@ -11,10 +11,11 @@ from aurora.middleware.security import SecurityHeadersMiddleware
 from aurora.middleware.rate_limiter import RateLimiter
 
 # Importa os roteadores
-from aurora.routers import cnpj_routes, cliente_router, lead_router
+from aurora.routers import cnpj_routes, cliente_router, lead_router, auth_router
 
 # Importa o módulo de autenticação
 from aurora.auth.security import get_current_user
+from aurora.auth.two_factor import require_2fa
 
 # Carrega variáveis de ambiente do arquivo .env na raiz do projeto
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '.env'))
@@ -49,6 +50,9 @@ app.add_middleware(RateLimiter, requests_per_minute=60)
 app.middleware("http")(error_handler_middleware)
 
 # Inclui os roteadores na aplicação
+# Rotas de autenticação
+app.include_router(auth_router.router, prefix="/api/v1/auth", tags=["Autenticação"])
+
 # Rotas públicas
 app.include_router(cnpj_routes.router, prefix="/api/v1", tags=["CNPJ"])
 
@@ -65,6 +69,16 @@ app.include_router(
     prefix="/api/v1", 
     tags=["Leads"],
     dependencies=[Depends(get_current_user)]  # Protege todas as rotas de leads
+)
+
+# Rotas administrativas com 2FA
+admin_router = FastAPI()
+app.mount("/api/v1/admin", admin_router)
+admin_router.include_router(
+    cliente_router.router,
+    prefix="/clientes",
+    tags=["Admin - Clientes"],
+    dependencies=[Depends(require_2fa)]  # Requer 2FA para acesso
 )
 
 @app.get("/")

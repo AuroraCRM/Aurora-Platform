@@ -2,70 +2,58 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 
 from aurora.database_config import get_db_session
-from aurora.models.cliente_model import ClienteDB
-from aurora.schemas.cliente_schemas import ClienteCreate, ClienteRead, ClienteUpdate
+from aurora.schemas.cliente_schemas import Cliente, ClienteCreate, ClienteUpdate
 from aurora.services.servico_crm import (
     cadastrar_novo_cliente,
     buscar_cliente_por_id,
     listar_todos_os_clientes,
     atualizar_cliente,
-    deletar_cliente
+    deletar_cliente,
+    CRMServiceError
 )
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/clientes",
+    tags=["clientes"],
+    responses={404: {"description": "Cliente não encontrado"}}
+)
 
-@router.post("/clientes/", response_model=ClienteRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=Cliente, status_code=status.HTTP_201_CREATED)
 def criar_cliente(cliente: ClienteCreate, db: Session = Depends(get_db_session)):
-    """
-    Cria um novo cliente no sistema.
-    """
-    return cadastrar_novo_cliente(db, cliente)
+    """Cria um novo cliente."""
+    try:
+        return cadastrar_novo_cliente(db, cliente)
+    except CRMServiceError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
 
-@router.get("/clientes/", response_model=List[ClienteRead])
+@router.get("/", response_model=List[Cliente])
 def listar_clientes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db_session)):
-    """
-    Lista todos os clientes cadastrados com paginação.
-    """
-    return listar_todos_os_clientes(db, skip, limit)
+    """Lista todos os clientes com paginação."""
+    return listar_todos_os_clientes(db, skip=skip, limit=limit)
 
-@router.get("/clientes/{cliente_id}", response_model=ClienteRead)
+@router.get("/{cliente_id}", response_model=Cliente)
 def obter_cliente(cliente_id: int, db: Session = Depends(get_db_session)):
-    """
-    Obtém os detalhes de um cliente específico pelo ID.
-    """
-    cliente = buscar_cliente_por_id(db, cliente_id)
-    if not cliente:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cliente com ID {cliente_id} não encontrado"
-        )
-    return cliente
+    """Obtém um cliente específico pelo ID."""
+    db_cliente = buscar_cliente_por_id(db, cliente_id)
+    if db_cliente is None:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    return db_cliente
 
-@router.put("/clientes/{cliente_id}", response_model=ClienteRead)
-def atualizar_cliente_endpoint(cliente_id: int, cliente_update: ClienteUpdate, db: Session = Depends(get_db_session)):
-    """
-    Atualiza os dados de um cliente existente.
-    """
-    cliente_atualizado = atualizar_cliente(db, cliente_id, cliente_update)
-    if not cliente_atualizado:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cliente com ID {cliente_id} não encontrado"
-        )
-    return cliente_atualizado
+@router.put("/{cliente_id}", response_model=Cliente)
+def atualizar_cliente_endpoint(cliente_id: int, cliente: ClienteUpdate, db: Session = Depends(get_db_session)):
+    """Atualiza os dados de um cliente existente."""
+    db_cliente = atualizar_cliente(db, cliente_id, cliente)
+    if db_cliente is None:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    return db_cliente
 
-@router.delete("/clientes/{cliente_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{cliente_id}", response_model=Cliente)
 def remover_cliente(cliente_id: int, db: Session = Depends(get_db_session)):
-    """
-    Remove um cliente do sistema.
-    """
-    cliente_removido = deletar_cliente(db, cliente_id)
-    if not cliente_removido:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cliente com ID {cliente_id} não encontrado"
-        )
-    return None
+    """Remove um cliente do sistema."""
+    db_cliente = deletar_cliente(db, cliente_id)
+    if db_cliente is None:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    return db_cliente

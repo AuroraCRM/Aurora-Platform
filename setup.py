@@ -14,6 +14,10 @@ setup(
         "redis>=4.0.0",
         "azure-keyvault-secrets>=4.3.0",
         "azure-identity>=1.7.0",
+        "qrcode>=7.3.1",
+        "pyotp>=2.6.0",
+        "pillow>=9.0.0",  # Dependência do qrcode
+        "setuptools>=58.0.0",  # Explicitamente requerido
     ],
     extras_require={
         "dev": [
@@ -23,4 +27,5 @@ setup(
             "flake8>=3.9.2",
         ],
     },
+    python_requires=">=3.8",
 )

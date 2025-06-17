@@ -1,0 +1,29 @@
+# Dependências básicas
+pydantic>=2.0.0
+numpy>=1.20.0
+scikit-learn>=1.0.0
+
+# Processamento de texto
+nltk>=3.6.0
+spacy>=3.0.0
+regex>=2021.4.4
+
+# Armazenamento vetorial (escolher um)
+faiss-cpu>=1.7.0  # Alternativa: faiss-gpu para aceleração por GPU
+# hnswlib>=0.6.0  # Alternativa mais leve ao FAISS
+
+# Integrações com Vector DBs (escolher conforme necessidade)
+# pinecone-client>=2.0.0  # Para Pinecone
+# weaviate-client>=3.0.0  # Para Weaviate
+# qdrant-client>=0.7.0  # Para Qdrant
+# opensearch-py>=2.0.0  # Para Amazon OpenSearch
+
+# Embeddings e ML (escolher conforme estratégia)
+# sentence-transformers>=2.0.0  # Para geração de embeddings
+# torch>=1.10.0  # Para modelos PyTorch
+# transformers>=4.15.0  # Para modelos Hugging Face
+
+# Utilitários
+python-dotenv>=0.19.0
+tqdm>=4.62.0
+loguru>=0.5.0
