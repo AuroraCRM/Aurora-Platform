@@ -18,7 +18,11 @@ from aurora.auth.security import get_current_user
 from aurora.auth.two_factor import require_2fa
 
 # Carrega variáveis de ambiente do arquivo .env na raiz do projeto
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '.env'))
+load_dotenv(
+    dotenv_path=os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env"
+    )
+)
 
 # Instância principal do FastAPI
 app = FastAPI(
@@ -32,7 +36,10 @@ app = FastAPI(
 # Configuração de CORS - Restringindo origens permitidas
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://aurora-crm.example.com"],  # Restringe origens permitidas
+    allow_origins=[
+        "http://localhost:3000",
+        "https://aurora-crm.example.com",
+    ],  # Restringe origens permitidas
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],  # Restringe métodos permitidos
     allow_headers=["Authorization", "Content-Type"],  # Restringe cabeçalhos permitidos
@@ -58,17 +65,17 @@ app.include_router(cnpj_routes.router, prefix="/api/v1", tags=["CNPJ"])
 
 # Rotas protegidas por autenticação
 app.include_router(
-    cliente_router.router, 
-    prefix="/api/v1", 
+    cliente_router.router,
+    prefix="/api/v1",
     tags=["Clientes"],
-    dependencies=[Depends(get_current_user)]  # Protege todas as rotas de clientes
+    dependencies=[Depends(get_current_user)],  # Protege todas as rotas de clientes
 )
 
 app.include_router(
-    lead_router.router, 
-    prefix="/api/v1", 
+    lead_router.router,
+    prefix="/api/v1",
     tags=["Leads"],
-    dependencies=[Depends(get_current_user)]  # Protege todas as rotas de leads
+    dependencies=[Depends(get_current_user)],  # Protege todas as rotas de leads
 )
 
 # Rotas administrativas com 2FA
@@ -78,16 +85,18 @@ admin_router.include_router(
     cliente_router.router,
     prefix="/clientes",
     tags=["Admin - Clientes"],
-    dependencies=[Depends(require_2fa)]  # Requer 2FA para acesso
+    dependencies=[Depends(require_2fa)],  # Requer 2FA para acesso
 )
+
 
 @app.get("/")
 async def read_root():
     return {
         "message": "Bem-vindo à API da Aurora CRM!",
         "docs": "/docs",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
+
 
 @app.get("/health")
 async def health_check():

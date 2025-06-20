@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
+
 class ClienteBase(BaseModel):
     razao_social: str
     nome_fantasia: Optional[str] = None
@@ -14,8 +15,10 @@ class ClienteBase(BaseModel):
     segmento: Optional[str] = None
     observacoes: Optional[str] = None
 
+
 class ClienteCreate(ClienteBase):
     pass
+
 
 class ClienteUpdate(BaseModel):
     razao_social: Optional[str] = None
@@ -28,12 +31,14 @@ class ClienteUpdate(BaseModel):
     segmento: Optional[str] = None
     observacoes: Optional[str] = None
 
+
 class ClienteRead(ClienteBase):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     data_criacao: datetime
     data_atualizacao: Optional[datetime] = None
+
 
 # Alias para compatibilidade com código existente
 Cliente = ClienteRead

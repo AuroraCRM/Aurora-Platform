@@ -223,3 +223,53 @@ aurora-site	CONFORME	Repositório simples e bem estruturado para uma aplicação
     else:
         data = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
         await self.cache.set(cache_key, data, expire=86400)
+
+        - id: "20250616-123510"
+  tipo: "MELHORIA_CODIGO"
+  titulo: "Implementação de Suíte de Testes Unitários com Mocks"
+  descricao: |
+    Para resolver a dívida técnica de "Cobertura de Testes Limitada" apontada na análise do Amazon Q, foi criada uma suíte de testes unitários com `pytest` e `unittest.mock`. 
+    Foram implementados testes para o `ClienteRepository`, mockando a sessão do banco de dados para validar a lógica de acesso a dados de forma isolada. 
+    Adicionalmente, foram criados testes para o `CNPJaProvider`, mockando o `httpx.AsyncClient` para simular cenários de sucesso e de falha da API externa, garantindo a resiliência do sistema.
+  componentes_afetados:
+    - "tests/unit/test_repositories.py"
+    - "tests/unit/test_integrations.py"
+  codigo_exemplo: |
+    # Exemplo de mock no teste do repositório para o cenário "não encontrado"
+    # em tests/unit/test_repositories.py
+
+    def test_get_cliente_by_id_not_found():
+        """
+        Testa o cenário onde um cliente não é encontrado.
+        """
+        # 1. Preparação (Arrange)
+        mock_db_session = MagicMock(spec=Session)
+        
+        # Simula que a consulta ao banco de dados não retornará nenhum resultado
+        mock_db_session.query().filter().first.return_value = None
+        
+        repo = ClienteRepository(db=mock_db_session)
+        
+        # 2. Ação (Act)
+        result = repo.get_by_id(cliente_id=999)
+        
+        # 3. Verificação (Assert)
+        assert result is None
+
+
+ id: "20250616-175000"
+  tipo: "DECISAO_ARQUITETURA"
+  titulo: "Setup Inicial e Baseline do Repositório Aurora-CRM"
+  descricao: |
+    Estabelecida a primeira versão da base de código no novo repositório oficial do projeto. 
+    Este commit inicial consolida todo o trabalho de refatoração baseado na análise do Amazon Q e os ativos de metodologia e dados de IA.
+    O projeto agora possui uma fundação robusta, testada e bem documentada para futuras expansões.
+  componentes_afetados:
+    - "Todo o repositório"
+  codigo_exemplo: |
+    # Principais ativos incluídos neste commit inicial:
+    # - /src: Código do backend refatorado (Repository, Provider, Cache, Middleware).
+    # - /tests: Testes unitários com mocks para as camadas de dados e integração.
+    # - /data: Datasets v1 de sentimento e multi-tarefa para IA.
+    # - /docs: Manuais de metodologia do Modelo Aurora e do Codex.
+    # - AGENTS.md: Arquivo de governança para o agente Codex.

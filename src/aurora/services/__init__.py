@@ -1,3 +1,2 @@
-# Services package
-# Importa todos os serviços para facilitar o acesso
-from aurora.services.cliente_service import ClienteService
+# Use um import relativo, que é a melhor prática dentro de um pacote
+from .servico_crm import ServicoCRM as ClienteService

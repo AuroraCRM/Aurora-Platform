@@ -8,6 +8,7 @@ from aurora.models.lead_models import LeadDB
 
 logger = logging.getLogger(__name__)
 
+
 def init_db():
     """
     Inicializa o banco de dados criando todas as tabelas definidas nos modelos.
@@ -19,6 +20,7 @@ def init_db():
     except SQLAlchemyError as e:
         logger.error(f"Erro ao criar tabelas: {str(e)}")
         raise
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

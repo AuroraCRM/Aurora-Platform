@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 from datetime import datetime
 
+
 class LeadBase(BaseModel):
     nome: str
     email: EmailStr
@@ -14,8 +15,10 @@ class LeadBase(BaseModel):
     interesse: Optional[str] = None
     observacoes: Optional[str] = None
 
+
 class LeadCreate(LeadBase):
     pass
+
 
 class LeadUpdate(BaseModel):
     nome: Optional[str] = None
@@ -28,9 +31,10 @@ class LeadUpdate(BaseModel):
     observacoes: Optional[str] = None
     status: Optional[str] = None
 
+
 class LeadRead(LeadBase):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     status: str
     data_criacao: datetime

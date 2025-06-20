@@ -5,6 +5,7 @@ from sqlalchemy.sql import func
 import enum
 from aurora.database_config import Base
 
+
 class StatusLead(str, enum.Enum):
     NOVO = "novo"
     CONTATADO = "contatado"
@@ -12,6 +13,7 @@ class StatusLead(str, enum.Enum):
     PROPOSTA = "proposta"
     GANHO = "ganho"
     PERDIDO = "perdido"
+
 
 class LeadDB(Base):
     __tablename__ = "leads"
