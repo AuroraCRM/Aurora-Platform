@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 # Carrega variáveis de ambiente do arquivo .env
-load_dotenv()
+load_dotenv(override=True)
 
 # Configuração do banco de dados
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./aurora.db")

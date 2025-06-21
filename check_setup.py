@@ -35,7 +35,7 @@ def check_python_version():
 def check_dependencies():
     """Verifica se as dependências necessárias estão instaladas."""
     required_packages = [
-        "fastapi",
+"fastapi",
         "uvicorn",
         "sqlalchemy",
         "pydantic",
@@ -60,7 +60,7 @@ def check_dependencies():
 
 def check_environment_variables():
     """Verifica se as variáveis de ambiente necessárias estão configuradas."""
-    load_dotenv()
+    load_dotenv(override=True)
 
     required_vars = [
         "DATABASE_URL",
@@ -106,6 +106,8 @@ def check_database_connection():
         # sys.exit(1)
 
     except Exception as e:
-        logger.error("❌ Ocorreu um erro inesperado ao verificar a conexão com o banco de dados.")
+        logger.error(
+            "❌ Ocorreu um erro inesperado ao verificar a conexão com o banco de dados."
+        )
         logger.error(f"Detalhes: {e}")
         # sys.exit(1)

@@ -16,12 +16,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src"
 
 # Define variáveis mínimas de ambiente para inicializar a aplicação
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
+os.environ.setdefault("TEST_DATABASE_URL", "sqlite:///./test.db")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("SECRET_KEY", "test")
 os.environ.setdefault("ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 os.environ.setdefault("CNPJA_PAID_URL", "https://fake-paid-api.com")
 os.environ.setdefault("CNPJA_FREE_URL", "https://fake-free-api.com")
+os.environ.setdefault("CNPJWS_PUBLIC_URL", "https://fake-free-api.com")
 # -------------------------
 
 # Agora que o path está correto, a importação do 'app' deve funcionar.

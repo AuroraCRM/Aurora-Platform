@@ -16,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Carrega variáveis de ambiente
-load_dotenv()
+load_dotenv(override=True)
 
 
 def main():

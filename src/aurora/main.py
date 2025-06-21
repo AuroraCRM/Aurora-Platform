@@ -21,7 +21,8 @@ from aurora.auth.two_factor import require_2fa
 load_dotenv(
     dotenv_path=os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env"
-    )
+    ),
+    override=True,
 )
 
 # Instância principal do FastAPI

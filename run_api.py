@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 # Carrega variáveis de ambiente
-load_dotenv()
+load_dotenv(override=True)
 
 if __name__ == "__main__":
     host = os.getenv("API_HOST", "0.0.0.0")

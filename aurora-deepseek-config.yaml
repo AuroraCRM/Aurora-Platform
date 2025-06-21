@@ -1,0 +1,26 @@
+# Arquivo de configuração para guiar o DeepSeek-R1 nos padrões do Projeto Aurora
+# Versão 1.0
+
+# Define o estilo de código a ser seguido
+coding_style:
+  python:
+    indent: 4
+    max_line_length: 88  # Padrão do 'black' formatter
+    docstring_format: "google"
+
+# Define as regras da nossa arquitetura de software
+architecture_rules:
+  # As camadas que compõem nossa Clean Architecture
+  layers: ['routers', 'services', 'repositories', 'schemas', 'models', 'integrations', 'workers']
+  
+  # Padrões para a criação de testes
+  testing:
+    framework: pytest
+    # Meta de cobertura de testes para novas funcionalidades
+    coverage_threshold: 90
+
+# Regras customizadas de nomenclatura
+naming_conventions:
+  class_name: "PascalCase"
+  function_name: "snake_case"
+  variable_name: "snake_case"
