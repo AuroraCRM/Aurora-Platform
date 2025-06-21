@@ -1,191 +1,310 @@
-# Manual de Utilização - Aurora Platform
+# Manual Técnico - Aurora Platform
 
-## 1. Introdução
+## 1. Visão Geral do Sistema
 
-Bem-vindo à Aurora Platform, um sistema de CRM (Customer Relationship Management) inteligente projetado para transformar o relacionamento com seus clientes. Este manual fornece instruções detalhadas sobre como utilizar as funcionalidades do sistema.
+A Aurora Platform é um sistema de CRM (Customer Relationship Management) desenvolvido para gerenciar relacionamentos com clientes, automatizar processos de vendas e fornecer insights de negócios. O sistema é construído com uma arquitetura moderna, utilizando FastAPI como framework principal, SQLAlchemy para ORM, e diversos componentes para garantir segurança, desempenho e escalabilidade.
 
-### 1.1 Sobre a Aurora Platform
+### 1.1 Componentes Principais
 
-A Aurora Platform é uma solução completa para gerenciamento de relacionamento com clientes que utiliza inteligência artificial para aprender continuamente com cada interação. O sistema permite:
+- **API RESTful**: Interface principal para interação com o sistema
+- **Banco de Dados**: PostgreSQL para armazenamento persistente
+- **Cache**: Redis para armazenamento em cache
+- **Autenticação**: Sistema JWT com suporte a 2FA
+- **Integração Externa**: API CNPJá para consulta de dados de empresas
+- **Monitoramento**: Prometheus e Grafana
+- **Segurança**: ModSecurity como WAF
 
-- Gerenciar informações de clientes
-- Automatizar processos de vendas
-- Obter insights de negócios em tempo real
-- Personalizar interações com base em aprendizado contínuo
+### 1.2 Arquitetura
 
-### 1.2 Requisitos de Sistema
+A Aurora Platform segue uma arquitetura em camadas:
 
-Para acessar a Aurora Platform, você precisa de:
+1. **Camada de Apresentação**: API RESTful (FastAPI)
+2. **Camada de Serviço**: Lógica de negócio
+3. **Camada de Repositório**: Acesso a dados
+4. **Camada de Modelo**: Entidades de domínio
+5. **Camada de Infraestrutura**: Banco de dados, cache, etc.
 
-- Navegador web moderno (Chrome, Firefox, Edge, Safari)
-- Conexão com a internet
-- Credenciais de acesso fornecidas pelo administrador
+Além disso, o sistema inclui um módulo de IA (ai_core) para aprendizado contínuo e personalização proativa.
 
-## 2. Primeiros Passos
+## 2. Requisitos do Sistema
 
-### 2.1 Acesso ao Sistema
+### 2.1 Requisitos de Software
 
-1. Abra seu navegador e acesse o endereço fornecido pelo administrador
-2. Na tela de login, insira seu nome de usuário e senha
-3. Se a autenticação de dois fatores (2FA) estiver ativada, você será solicitado a inserir um código
-4. Após a autenticação bem-sucedida, você será direcionado para o dashboard principal
+- Python 3.8 ou superior
+- Docker e Docker Compose
+- PostgreSQL 15
+- Redis 7
+- Nginx com ModSecurity
 
-### 2.2 Interface do Usuário
+### 2.2 Requisitos de Hardware (Mínimo)
 
-A interface da Aurora Platform é organizada em várias seções:
+- CPU: 2 cores
+- RAM: 4 GB
+- Armazenamento: 20 GB
 
-- **Dashboard**: Visão geral com métricas e gráficos importantes
-- **Clientes**: Gerenciamento de informações de clientes
-- **Leads**: Gerenciamento de potenciais clientes
-- **Vendas**: Acompanhamento de oportunidades de vendas
-- **Relatórios**: Análises e insights de negócios
-- **Configurações**: Personalização do sistema
+## 3. Instalação e Configuração
 
-## 3. Gerenciamento de Clientes
+### 3.1 Instalação Local para Desenvolvimento
 
-### 3.1 Visualizar Clientes
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/Aurora-Platform.git
+   cd Aurora-Platform
+Crie e ative um ambiente virtual:
 
-1. Clique em "Clientes" no menu lateral
-2. Você verá uma lista de todos os clientes cadastrados
-3. Use a barra de pesquisa para encontrar clientes específicos
-4. Clique em um cliente para ver detalhes completos
+bash
+Copiar
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\\Scripts\\activate    # Windows
+Instale as dependências:
 
-### 3.2 Adicionar Novo Cliente
+bash
+Copiar
+pip install -r requirements.txt
+pip install -r requirements-dev.txt  # Para desenvolvimento
+Configure o arquivo .env:
 
-#### Método 1: Cadastro Manual
+bash
+Copiar
+# Copie o arquivo de exemplo
+cp .env.example .env
+# Edite o arquivo com suas configurações
+Execute as migrações do banco de dados:
 
-1. Na tela de Clientes, clique no botão "Novo Cliente"
-2. Preencha os campos obrigatórios:
-   - Razão Social
-   - CNPJ
-   - E-mail
-3. Preencha os campos opcionais conforme necessário
-4. Clique em "Salvar" para criar o cliente
+bash
+Copiar
+python src/aurora/init_db.py
+Inicie o servidor de desenvolvimento:
 
-#### Método 2: Cadastro por CNPJ
+bash
+Copiar
+python run_api.py
+3.2 Implantação com Docker
+Configure o arquivo .env para produção
 
-1. Na tela de Clientes, clique no botão "Consultar CNPJ"
-2. Digite o CNPJ da empresa
-3. Clique em "Consultar"
-4. O sistema preencherá automaticamente os dados disponíveis
-5. Complete qualquer informação adicional necessária
-6. Clique em "Salvar" para criar o cliente
+Construa e inicie os contêineres:
 
-### 3.3 Editar Cliente
+bash
+Copiar
+docker-compose up -d
+Verifique se todos os serviços estão em execução:
 
-1. Localize o cliente na lista
-2. Clique no ícone de edição (lápis)
-3. Atualize as informações necessárias
-4. Clique em "Salvar" para aplicar as alterações
+bash
+Copiar
+docker-compose ps
+4. Estrutura do Projeto
+bash
+Copiar
+Aurora-Platform/
+├── src/
+│   └── aurora/
+│       ├── ai_core/           # Módulo de IA e aprendizado contínuo
+│       ├── auth/              # Autenticação e segurança
+│       ├── cache/             # Serviços de cache
+│       ├── integrations/      # Integrações externas
+│       ├── middleware/        # Middlewares FastAPI
+│       ├── models/            # Modelos SQLAlchemy
+│       ├── repositories/      # Repositórios de dados
+│       ├── routers/           # Rotas da API
+│       ├── schemas/           # Schemas Pydantic
+│       ├── services/          # Serviços de negócio
+│       └── utils/             # Utilitários
+├── tests/                     # Testes automatizados
+├── security/                  # Ferramentas e configurações de segurança
+└── assets/                    # Recursos estáticos
+5. Componentes Principais
+5.1 API RESTful (FastAPI)
+A API é o ponto de entrada principal para o sistema, fornecendo endpoints para todas as funcionalidades. Os principais endpoints incluem:
 
-### 3.4 Excluir Cliente
+/api/v1/auth: Autenticação e gerenciamento de usuários
 
-1. Localize o cliente na lista
-2. Clique no ícone de exclusão (lixeira)
-3. Confirme a exclusão quando solicitado
+/api/v1/clientes: Gerenciamento de clientes
 
-## 4. Gerenciamento de Leads
+/api/v1/cnpj: Consulta de dados de CNPJ
 
-### 4.1 Visualizar Leads
+/api/v1/admin: Operações administrativas (requer 2FA)
 
-1. Clique em "Leads" no menu lateral
-2. Você verá uma lista de todos os leads cadastrados
-3. Use os filtros para segmentar leads por status, origem, etc.
+5.2 Banco de Dados
+O sistema utiliza PostgreSQL como banco de dados principal, com SQLAlchemy como ORM. As principais entidades incluem:
 
-### 4.2 Adicionar Novo Lead
+ClienteDB: Informações de clientes
 
-1. Na tela de Leads, clique no botão "Novo Lead"
-2. Preencha as informações de contato
-3. Selecione a origem do lead
-4. Defina o status inicial
-5. Clique em "Salvar"
+LeadDB: Leads de vendas
 
-### 4.3 Converter Lead em Cliente
+5.3 Autenticação e Segurança
+O sistema implementa várias camadas de segurança:
 
-1. Localize o lead na lista
-2. Clique no botão "Converter em Cliente"
-3. Complete as informações adicionais necessárias
-4. Clique em "Converter"
+JWT: Tokens de acesso seguros
 
-## 5. Recursos Avançados
+2FA: Autenticação de dois fatores
 
-### 5.1 Autenticação de Dois Fatores (2FA)
+Rate Limiting: Proteção contra força bruta
 
-#### Ativar 2FA
+Cabeçalhos de Segurança: Proteção contra ataques web comuns
 
-1. Acesse seu perfil clicando no seu nome no canto superior direito
-2. Selecione "Segurança"
-3. Clique em "Ativar 2FA"
-4. Escaneie o código QR com um aplicativo autenticador (Google Authenticator, Microsoft Authenticator, etc.)
-5. Digite o código gerado pelo aplicativo
-6. Guarde os códigos de backup fornecidos em um local seguro
+ModSecurity: WAF para proteção adicional
 
-#### Usar 2FA
+5.4 Módulo de IA (ai_core)
+O módulo de IA implementa aprendizado contínuo com três componentes principais:
 
-1. Ao fazer login, após inserir seu nome de usuário e senha, você será solicitado a inserir um código
-2. Abra seu aplicativo autenticador
-3. Digite o código de 6 dígitos exibido
-4. Se você perder acesso ao seu dispositivo, use um dos códigos de backup
+Ingestão de Dados: Captura e processamento de interações
 
-### 5.2 Integração com API CNPJ
+Armazenamento de Conhecimento: Armazenamento vetorial para RAG
 
-A Aurora Platform integra-se com a API CNPJá para obter informações atualizadas sobre empresas:
+Feedback Loop: Captura e aplicação de feedback para melhoria contínua
 
-1. Na tela de Clientes, clique em "Consultar CNPJ"
-2. Digite o CNPJ da empresa
-3. O sistema buscará automaticamente:
-   - Razão social
-   - Nome fantasia
-   - Endereço
-   - Contatos
-   - Situação cadastral
+6. Fluxos de Trabalho Principais
+6.1 Cadastro de Cliente
+O usuário envia dados do cliente via API
 
-### 5.3 Personalização do Dashboard
+O sistema valida os dados
 
-1. No Dashboard, clique no ícone de configuração (engrenagem)
-2. Selecione os widgets que deseja exibir
-3. Arraste e solte para reorganizar
-4. Clique em "Salvar Layout"
+O sistema verifica duplicidade de CNPJ
 
-## 6. Solução de Problemas
+O cliente é criado no banco de dados
 
-### 6.1 Problemas de Login
+O sistema retorna os dados do cliente criado
 
-- **Esqueci minha senha**: Clique em "Esqueci minha senha" na tela de login e siga as instruções
-- **Bloqueio de conta**: Após várias tentativas incorretas, sua conta pode ser bloqueada temporariamente. Aguarde alguns minutos e tente novamente
-- **Problemas com 2FA**: Use um dos códigos de backup fornecidos durante a configuração
+6.2 Consulta de CNPJ
+O usuário envia um CNPJ para consulta
 
-### 6.2 Problemas com Consulta de CNPJ
+O sistema verifica o cache
 
-- **CNPJ não encontrado**: Verifique se o CNPJ foi digitado corretamente
-- **Serviço indisponível**: O serviço externo pode estar temporariamente indisponível. Tente novamente mais tarde ou cadastre o cliente manualmente
+Se não estiver em cache, consulta a API externa
 
-### 6.3 Erros do Sistema
+Os dados são processados e retornados
 
-Se você encontrar um erro inesperado:
+Os dados são armazenados em cache para consultas futuras
 
-1. Anote a mensagem de erro exibida
-2. Tente atualizar a página
-3. Se o problema persistir, entre em contato com o suporte técnico
+6.3 Autenticação de Usuário
+O usuário envia credenciais
 
-## 7. Suporte e Contato
+O sistema valida as credenciais
 
-Para obter ajuda adicional:
+Se 2FA estiver ativado, solicita código
 
-- **E-mail de Suporte**: suporte@aurora-platform.example.com
-- **Telefone**: (XX) XXXX-XXXX
-- **Horário de Atendimento**: Segunda a Sexta, das 8h às 18h
+O sistema gera e retorna um token JWT
 
-## 8. Glossário
+O token é usado para autenticar requisições subsequentes
 
-- **CRM**: Customer Relationship Management (Gestão de Relacionamento com o Cliente)
-- **Lead**: Potencial cliente que demonstrou interesse em seus produtos ou serviços
-- **2FA**: Autenticação de Dois Fatores, uma camada adicional de segurança
-- **Dashboard**: Painel visual que exibe informações e métricas importantes
-- **CNPJ**: Cadastro Nacional da Pessoa Jurídica, registro de empresas no Brasil
+7. Configuração e Personalização
+7.1 Variáveis de Ambiente
+As principais variáveis de ambiente incluem:
 
----
+DATABASE_URL: URL de conexão com o banco de dados
 
-**Versão do Manual**: 1.0.0
+SECRET_KEY: Chave secreta para JWT
 
-**Data de Atualização**: [DATA ATUAL]
+ALGORITHM: Algoritmo para JWT (HS256 recomendado)
+
+ACCESS_TOKEN_EXPIRE_MINUTES: Tempo de expiração do token
+
+CNPJA_PAID_URL: URL da API paga da CNPJá
+
+CNPJA_FREE_URL: URL da API gratuita de fallback
+
+CNPJA_PRIMARY_KEY: Chave primária da API CNPJá
+
+CNPJA_SECONDARY_KEY: Chave secundária da API CNPJá
+
+CNPJA_AUTH_TYPE: Tipo de autenticação (ex: Bearer)
+
+7.2 Configuração do Docker
+O arquivo docker-compose.yml define os serviços necessários para a aplicação. Você pode ajustar:
+
+Limites de recursos (CPU, memória)
+
+Portas expostas
+
+Volumes persistentes
+
+Configurações de rede
+
+8. Monitoramento e Logs
+8.1 Logs
+Os logs são configurados para fornecer informações detalhadas sobre o funcionamento do sistema:
+
+Logs de aplicação: /app/logs
+
+Logs do Nginx: /var/log/nginx
+
+Logs do ModSecurity: /var/log/modsecurity
+
+8.2 Monitoramento
+O sistema utiliza Prometheus e Grafana para monitoramento:
+
+Prometheus: Coleta métricas
+
+Grafana: Visualização de métricas e dashboards
+
+Acesse o Grafana em http://localhost:3000 com as credenciais configuradas.
+
+9. Solução de Problemas
+9.1 Problemas Comuns
+Problema	Possível Causa	Solução
+API não inicia	Configuração incorreta do banco de dados	Verifique as variáveis de ambiente e a conexão com o banco
+Erro de autenticação	Token expirado ou inválido	Gere um novo token de acesso
+Lentidão nas consultas	Cache não configurado corretamente	Verifique a conexão com o Redis
+Erro na consulta de CNPJ	API externa indisponível	Verifique a chave da API e a disponibilidade do serviço
+
+9.2 Logs de Erro
+Os logs de erro são armazenados em /app/logs/error.log. Consulte este arquivo para informações detalhadas sobre erros.
+
+10. Segurança
+10.1 Melhores Práticas
+Mantenha todas as dependências atualizadas
+
+Não armazene segredos no código-fonte
+
+Utilize HTTPS em produção
+
+Implemente o princípio do menor privilégio
+
+Realize backups regulares do banco de dados
+
+10.2 Atualizações de Segurança
+Verifique regularmente por atualizações de segurança:
+
+bash
+Copiar
+pip install safety
+safety check
+11. Desenvolvimento e Contribuição
+11.1 Ambiente de Desenvolvimento
+Configure o ambiente conforme a seção 3.1
+
+Instale as dependências de desenvolvimento:
+
+bash
+Copiar
+pip install -r requirements-dev.txt
+11.2 Testes
+Execute os testes automatizados:
+
+bash
+Copiar
+pytest
+11.3 Padrões de Código
+O projeto segue os seguintes padrões:
+
+PEP 8 para estilo de código
+
+Docstrings para documentação
+
+Type hints para tipagem estática
+
+Testes unitários para funcionalidades críticas
+
+12. Referências
+FastAPI Documentation
+
+SQLAlchemy Documentation
+
+OWASP Top 10
+
+Docker Documentation
+
+Versão do Manual: 1.0.0
+
+Data de Atualização: [21/06/2025]

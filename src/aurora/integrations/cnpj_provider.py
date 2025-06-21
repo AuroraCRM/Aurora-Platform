@@ -1,127 +1,46 @@
 # src/aurora/integrations/cnpj_provider.py
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict
 import httpx
-from fastapi import HTTPException
-from aurora.config import settings
+from typing import Dict, Any
 import logging
+from fastapi import HTTPException, status
+from aurora.config import settings
 
 logger = logging.getLogger(__name__)
 
-
-class CNPJProvider(ABC):
+class CNPJaProvider:
     """
-    Define a interface abstrata para um provedor de dados de CNPJ.
-    Qualquer provedor concreto deve implementar o método get_cnpj_data.
+    Implementação para o MVP que consulta a API pública do cnpj.ws.
+    O nome da classe é mantido para evitar alterações na injeção de dependência.
     """
-
-    @abstractmethod
-    async def get_cnpj_data(self, cnpj: str) -> tuple[Dict[str, Any], str]:
-        pass
-
-
-class CNPJaProvider(CNPJProvider):
-    """
-    Implementação concreta do CNPJProvider que utiliza a API da CNPJá.
-    """
-
-    def __init__(
-        self,
-        api_url: str | None = None,
-        api_key: str | None = None,
-        auth_type: str | None = None,
-    ) -> None:
-        api_url_env = getattr(settings, "CNPJA_API_URL", "")
-        api_key_env = getattr(settings, "CNPJA_API_KEY", "")
-        auth_env = getattr(settings, "CNPJA_AUTH_TYPE", "Bearer")
-
-        self.api_url = (api_url or api_url_env).rstrip("/")
-        self.api_key = api_key or api_key_env
-        self.auth_type = auth_type or auth_env
-
-        if not self.api_url or not self.api_key:
-            raise ValueError("URL ou Chave da API de CNPJ não configurada")
+    def __init__(self):
+        self.base_url = settings.get("CNPJWS_PUBLIC_URL", "").rstrip('/')
+        if not self.base_url:
+            raise ValueError("A URL da API (CNPJWS_PUBLIC_URL) não está configurada.")
 
     async def get_cnpj_data(self, cnpj: str) -> tuple[Dict[str, Any], str]:
         """
-        Busca os dados de um CNPJ na API externa da CNPJá.
+        Busca os dados de um CNPJ na API pública cnpj.ws.
         """
         cnpj_limpo = "".join(filter(str.isdigit, cnpj))
-        url = f"{self.api_url}/{cnpj_limpo}"
-        headers = {
-            "Authorization": f"{self.auth_type} {self.api_key}",
-            "Accept": "application/json",
-        }
+        url = f"{self.base_url}/cnpj/{cnpj_limpo}"
+        
+        logger.info(f"Modo MVP: Consultando CNPJ na API pública {url}")
 
-        logger.info(f"Consultando CNPJ {cnpj_limpo} na API CNPJá")
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers, timeout=10.0)
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, timeout=10.0)
                 response.raise_for_status()
-                dados = response.json()
-                return dados, "paga"
-        except httpx.HTTPStatusError as exc:
-            status_code = exc.response.status_code
-            try:
-                error_data = exc.response.json()
-                detail_message = error_data.get("message", "Erro desconhecido")
-            except Exception:
-                detail_message = str(exc)
-
-            logger.error(
-                "Erro ao consultar CNPJ %s: %s",
-                cnpj_limpo,
-                detail_message,
-            )
-
-            if status_code == 401:
-                detail_message = "Falha na autenticação com a API CNPJá"
-
-            fallback_url = f"https://api.cnpja.com/open/{cnpj_limpo}"
-            try:
-                async with httpx.AsyncClient() as client:
-                    fallback_response = await client.get(
-                        fallback_url,
-                        timeout=10.0,
-                    )
-                    fallback_response.raise_for_status()
-                    dados = fallback_response.json()
-                    return dados, "gratuita"
-            except Exception as fallback_error:
-                logger.error(
-                    "Fallback para API gratuita falhou: %s",
-                    str(fallback_error),
+                return response.json(), "gratuita"
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Erro HTTP ao consultar cnpj.ws: {e.response.status_code}")
+                raise HTTPException(
+                    status_code=e.response.status_code, 
+                    detail=f"O serviço de CNPJ retornou um erro: {e.response.status_code}"
                 )
-
-            raise HTTPException(
-                status_code=status_code,
-                detail=f"Erro ao buscar CNPJ: {detail_message}",
-            )
-        except httpx.RequestError as exc:
-            logger.error(
-                "Erro de conexão ao consultar CNPJ %s: %s",
-                cnpj_limpo,
-                str(exc),
-            )
-            fallback_url = f"https://api.cnpja.com/open/{cnpj_limpo}"
-            try:
-                async with httpx.AsyncClient() as client:
-                    fallback_response = await client.get(
-                        fallback_url,
-                        timeout=10.0,
-                    )
-                    fallback_response.raise_for_status()
-                    dados = fallback_response.json()
-                    return dados, "gratuita"
-            except Exception as fallback_error:
-                logger.error(
-                    "Fallback para API gratuita falhou: %s",
-                    str(fallback_error),
+            except httpx.RequestError as e:
+                logger.error(f"Erro de conexão ao tentar acessar cnpj.ws: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+                    detail="Serviço de consulta de CNPJ indisponível."
                 )
-
-            raise HTTPException(
-                status_code=503,
-                detail="Não foi possível se comunicar com o serviço de CNPJ",
-            )

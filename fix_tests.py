@@ -55,7 +55,7 @@ def db_session() -> Generator:
     \"\"\"
     connection = engine.connect()
     transaction = connection.begin()
-    db = TestingSessionLocal(bind=connection)
+db = TestingSessionLocal(bind=connection)
     try:
         yield db
     finally:
@@ -80,12 +80,13 @@ def client(db_session) -> Generator:
 def test_settings() -> Settings:
     \"\"\"
     Carrega as configurações do arquivo .env para os testes.
-    Isso resolve os erros de AttributeError (DATABASE_URL, CNPJA_API_URL, etc).
+    Isso resolve os erros de AttributeError (DATABASE_URL, CNPJA_PAID_URL, etc).
     \"\"\"
     return Settings()
 """
 
 # --- 2. Lógica do Script ---
+
 
 def fix_method_names_in_tests(tests_dir="tests"):
     """Varre a pasta de testes e aplica as renomeações de métodos."""
@@ -110,6 +111,7 @@ def fix_method_names_in_tests(tests_dir="tests"):
                 f.write(content)
     print("--- Renomeação de métodos concluída ---\n")
 
+
 def create_or_update_config_files():
     """Cria ou sobrescreve os arquivos de configuração de teste."""
     print("--- Criando/Atualizando arquivos de configuração ---")
@@ -133,4 +135,6 @@ if __name__ == "__main__":
     print("Iniciando script de correção massiva do ambiente de testes da Aurora...")
     create_or_update_config_files()
     fix_method_names_in_tests()
-    print("Script finalizado. Por favor, revise as alterações e execute 'pip install -r requirements.txt' se necessário.")
+    print(
+        "Script finalizado. Por favor, revise as alterações e execute 'pip install -r requirements.txt' se necessário."
+    )

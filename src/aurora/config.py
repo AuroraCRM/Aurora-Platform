@@ -1,38 +1,36 @@
 # src/aurora/config.py
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
 
 class Settings(BaseSettings):
     """
-    Gerencia as configurações da aplicação. Agora com suporte para
-    múltiplas chaves de API e URLs para a lógica de fallback.
+    Classe central para gerenciamento de configurações da aplicação.
+    Carrega variáveis a partir de um arquivo .env e valida seus tipos.
     """
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra='ignore')
 
-    # Variáveis do Banco de Dados
+    # Configurações do Banco de Dados
     DATABASE_URL: str
-    TEST_DATABASE_URL: Optional[str] = None
+    TEST_DATABASE_URL: str
 
-    # Configurações para a lógica de fallback do CNPJ
-    CNPJA_PAID_URL: str = "https://api.cnpja.com/office"
-    CNPJA_FREE_URL: str = "https://publica.cnpj.ws/cnpj"
+    # Configurações de Segurança e JWT
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # Configurações de Serviços Externos
+    # Usando o provedor cnpj.ws que validamos
+    CNPJWS_PUBLIC_URL: str
     
-    # Chaves de API lidas do .env (são opcionais na definição)
-    CNPJA_PRIMARY_KEY: Optional[str] = None
-    CNPJA_SECONDARY_KEY: Optional[str] = None
-    CNPJA_AUTH_TYPE: str = "Bearer"
-
-    # Variável do Redis
+    # Configuração do Cache (Redis)
     REDIS_URL: str
 
-    # Variáveis de Autenticação (JWT)
-    SECRET_KEY: str
-    ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    # Configuração do Pydantic para carregar do arquivo .env
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding='utf-8',
+        extra='ignore' # Ignora variáveis extras que possam estar no .env
+    )
 
-    # Variáveis do Azure Key Vault
-    AZURE_KEY_VAULT_URI: Optional[str] = None
-
-# Cria uma instância única das configurações
+# Cria uma instância única da classe Settings que será usada em toda a aplicação.
+# Qualquer arquivo que precisar de uma configuração fará: from aurora.config import settings
 settings = Settings()

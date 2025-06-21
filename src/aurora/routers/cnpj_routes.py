@@ -28,7 +28,7 @@ async def criar_cliente_via_cnpj(
     try:
         # A rota apenas delega a responsabilidade para o serviço
         # Linha 30 (corrigida)
-        novo_cliente = await service.criar_cliente_por_cnpj(cnpj=cnpj)
+        novo_cliente = await service.create_cliente_from_cnpj(cnpj=cnpj)
         return novo_cliente
     except HTTPException as e:
         # Se o serviço levantar uma HTTPException, nós a repassamos.

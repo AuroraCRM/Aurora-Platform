@@ -1,34 +1,23 @@
 # src/aurora/services/servico_crm.py
 
-from typing import Dict, Any, Optional, List
-import httpx
-from fastapi import Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from typing import Dict, Any
+import logging
 
-# Importações para a classe ServicoCRM
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from aurora.database_config import get_db_session
 from aurora.repositories.cliente_repository import ClienteRepository
 from aurora.integrations.cnpj_provider import CNPJaProvider
-from aurora.schemas.cliente_schemas import ClienteCreate, ClienteUpdate
-from aurora.database_config import get_db_session
 from aurora.cache.redis_cache import RedisCache
-from aurora.models.cliente_model import ClienteDB
-
-import logging
+from aurora.schemas.cliente_schemas import ClienteCreate
 
 logger = logging.getLogger(__name__)
 
-# Constantes para a API CNPJ
-CNPJA_OPEN_API_URL = "https://api.cnpja.com/open"
-CNPJA_PAID_API_URL = "https://api.cnpja.com/v1"
-CNPJA_API_KEY_PRIMARY = None
-CNPJA_API_KEY_SECONDARY = None
-
-
 class ServicoCRM:
     """
-    Serviço que orquestra a lógica de negócio do CRM.
-    Agora com Repository, Provedor de API e Cache.
+    Serviço que orquestra a lógica de negócio do CRM, utilizando os padrões
+    Repository, Provider de API e Cache para uma arquitetura limpa e robusta.
     """
 
     def __init__(
@@ -42,220 +31,82 @@ class ServicoCRM:
         self.cache = cache
 
     async def create_cliente_from_cnpj(self, cnpj: str) -> Dict[str, Any]:
-        """Cria um cliente a partir dos dados de um CNPJ, usando cache."""
+        """
+        Cria um novo cliente a partir da consulta de um CNPJ.
+        Orquestra a verificação no banco de dados, a consulta ao cache,
+        a chamada à API externa e a criação final do registro.
+        """
         cnpj_limpo = "".join(filter(str.isdigit, cnpj))
 
+        # 1. Verifica se o cliente já existe no banco de dados via repositório
         if self.cliente_repo.get_by_cnpj(cnpj=cnpj_limpo):
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Cliente com CNPJ {cnpj_limpo} já cadastrado.",
             )
 
-        # Verificação de cache antes da chamada externa
+        # 2. Tenta obter os dados do cache
         cache_key = f"cnpj:{cnpj_limpo}"
         cached_data = await self.cache.get(cache_key)
 
         if cached_data:
-            logger.info(f"Dados do CNPJ {cnpj_limpo} encontrados no cache")
-            data = cached_data
+            logger.info(f"Dados do CNPJ {cnpj_limpo} encontrados no cache.")
+            # **CORREÇÃO APLICADA**: Desempacota a tupla (dados, fonte) do cache
+            dados_brutos, fonte = cached_data
         else:
-            logger.info(
-                "Dados do CNPJ %s não encontrados no cache. "
-                "Buscando na API externa.",
-                cnpj_limpo,
-            )
+            logger.info(f"Dados do CNPJ {cnpj_limpo} não encontrados no cache. Buscando na API externa.")
             try:
-                dados_brutos, fonte = await self.cnpj_provider.get_cnpj_data(
-                    cnpj_limpo,
-                )
-                # Armazenamento do novo resultado no cache por 24 horas
-                await self.cache.set(cache_key, dados_brutos, expire=86400)
-                data = dados_brutos
+                dados_brutos, fonte = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+                # **CORREÇÃO APLICADA**: Salva a tupla completa no cache para manter o contexto da fonte
+                await self.cache.set(cache_key, (dados_brutos, fonte), expire=86400) # 24 horas
             except HTTPException as e:
+                # Re-lança exceções da API (ex: 404, 503) para o router tratar
                 raise e
             except Exception as exc:
-                logger.error(
-                    "Erro inesperado ao consultar CNPJ %s: %s",
-                    cnpj_limpo,
-                    str(exc),
-                )
+                logger.error("Erro inesperado ao consultar CNPJ %s: %s", cnpj_limpo, str(exc))
                 raise HTTPException(
-                    status_code=500,
-                    detail="Erro interno ao processar solicitação",
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Erro interno ao processar a solicitação de CNPJ.",
                 )
 
+        # 3. Normaliza os dados usando o padrão Adapter
         try:
-            cliente_schema = self._map_cnpj_data_to_cliente(data, cnpj_limpo)
-            return self.cliente_repo.create(cliente_schema.model_dump())
+            dados_normalizados = self._normalizar_dados_cnpj(dados_brutos, fonte)
+            cliente_schema = ClienteCreate(**dados_normalizados)
+            
+            # 4. Usa o repositório para criar o cliente no banco de dados
+            return self.cliente_repo.create(cliente_schema)
+        
         except Exception as exc:
-            logger.error(
-                "Erro ao processar dados do CNPJ %s: %s",
-                cnpj_limpo,
-                str(exc),
-            )
+            logger.error("Erro ao normalizar ou criar cliente para o CNPJ %s: %s", cnpj_limpo, str(exc))
             raise HTTPException(
-                status_code=422, detail="Erro ao processar dados do CNPJ"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+                detail=f"Erro ao processar os dados recebidos do CNPJ: {exc}"
             )
 
-    def _map_cnpj_data_to_cliente(
-        self, data: Dict[str, Any], cnpj_limpo: str
-    ) -> ClienteCreate:
-        """Mapeia os dados da API externa para o schema de cliente."""
-        if "company" in data:
-            company_data = data.get("company", {})
-            razao_social = company_data.get("name", "")
-            nome_fantasia = data.get("alias", "")
-            cnpj = data.get("taxId", cnpj_limpo)
-            emails = data.get("emails", [])
-            phones = data.get("phones", [])
-            email = (
-                emails[0].get("address", "contato@exemplo.com")
-                if emails
-                else "contato@exemplo.com"
-            )
-            telefone = ""
-            if phones:
-                area = phones[0].get("area", "")
-                number = phones[0].get("number", "")
-                telefone = f"{area}{number}" if area and number else ""
-        else:
-            razao_social = data.get("name", data.get("RAZAO SOCIAL", ""))
-            nome_fantasia = data.get("alias", data.get("NOME FANTASIA", ""))
-            cnpj = data.get("taxId", cnpj_limpo)
-            email = data.get("email", "contato@exemplo.com")
-            telefone = data.get("phone", data.get("TELEFONE", ""))
-
-        return ClienteCreate(
-            razao_social=razao_social,
-            nome_fantasia=nome_fantasia,
-            cnpj=cnpj,
-            email=email,
-            telefone=telefone,
-        )
-
-
-# Funções auxiliares para operações CRUD
-def cadastrar_novo_cliente(
-    db: Session,
-    cliente_in: ClienteCreate,
-) -> ClienteDB:
-    """Cadastra um novo cliente no banco de dados."""
-    try:
-        # Converte o schema Pydantic para um dicionário
-        if hasattr(cliente_in, "model_dump"):
-            cliente_data = cliente_in.model_dump()
-        else:
-            cliente_data = cliente_in.dict()
-
-        # Cria uma nova instância do modelo ClienteDB
-        db_cliente = ClienteDB(**cliente_data)
-
-        # Adiciona à sessão e persiste no banco
-        db.add(db_cliente)
-        db.commit()
-        db.refresh(db_cliente)
-        return db_cliente
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "Erro de integridade: Cliente com CNPJ ",
-                f"{cliente_in.cnpj} já existe.",
-            ),
-        )
-    except Exception as exc:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao cadastrar cliente: {exc}",
-        )
-
-
-def buscar_cliente_por_id(db: Session, cliente_id: int) -> Optional[ClienteDB]:
-    """Busca um cliente pelo ID."""
-    return db.query(ClienteDB).filter(ClienteDB.id == cliente_id).first()
-
-
-def listar_todos_os_clientes(
-    db: Session, skip: int = 0, limit: int = 100
-) -> List[ClienteDB]:
-    """Lista todos os clientes com paginação."""
-    return (
-        db.query(ClienteDB)
-        .order_by(ClienteDB.razao_social)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-
-
-def atualizar_cliente(
-    db: Session, cliente_id: int, cliente_update: ClienteUpdate
-) -> Optional[ClienteDB]:
-    """Atualiza os dados de um cliente existente."""
-    db_cliente = buscar_cliente_por_id(db, cliente_id)
-    if not db_cliente:
-        return None
-
-    # Converte o schema Pydantic em dicionário, excluindo campos não definidos
-    if hasattr(cliente_update, "model_dump"):
-        update_data = cliente_update.model_dump(exclude_unset=True)
-    else:
-        update_data = cliente_update.dict(exclude_unset=True)
-
-    # Atualiza cada campo do modelo
-    for key, value in update_data.items():
-        setattr(db_cliente, key, value)
-
-    # Persiste as alterações
-    db.add(db_cliente)
-    db.commit()
-    db.refresh(db_cliente)
-    return db_cliente
-
-
-def deletar_cliente(db: Session, cliente_id: int) -> Optional[ClienteDB]:
-    """Remove um cliente do banco de dados."""
-    db_cliente = buscar_cliente_por_id(db, cliente_id)
-    if not db_cliente:
-        return None
-
-    # Remove o cliente
-    db.delete(db_cliente)
-    db.commit()
-    return db_cliente
-
-
-# Função para chamar a API CNPJ
-async def call_cnpja_api(
-    base_url: str, cnpj: str, api_key: str = None
-) -> Dict[str, Any]:
-    """
-    Função para chamar a API CNPJá com tratamento de erros.
-    """
-    url = f"{base_url}/{cnpj}"
-    headers = {"Accept": "application/json"}
-
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, timeout=10.0)
-            response.raise_for_status()
-            return response.json()
-    except httpx.HTTPStatusError as exc:
-        status_code = exc.response.status_code
-        try:
-            error_data = exc.response.json()
-            detail = error_data.get("message", str(exc))
-        except Exception:
-            detail = str(exc)
-
-        raise HTTPException(status_code=status_code, detail=detail)
-    except httpx.RequestError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Erro de conexão: {exc}",
-        )
+    def _normalizar_dados_cnpj(self, dados_brutos: dict, fonte: str) -> dict:
+        """
+        Normaliza dados da API cnpj.ws para o schema ClienteCreate.
+        Esta função é o "Adapter" do nosso sistema.
+        """
+        if fonte == 'gratuita':
+            est = dados_brutos.get("estabelecimento", {})
+            
+            dados_normalizados = {
+                "razao_social": dados_brutos.get("razao_social"),
+                "nome_fantasia": est.get("nome_fantasia"),
+                "cnpj": est.get("cnpj"),
+                "inscricao_estadual": est.get("inscricoes_estaduais", [{}])[0].get("inscricao_estadual") if est.get("inscricoes_estaduais") else None,
+                "telefone": f"({est.get('ddd1')}) {est.get('telefone1')}" if est.get('ddd1') and est.get('telefone1') else None,
+                "email": est.get("email"),
+                "logradouro": est.get("logradouro"),
+                "numero": est.get("numero"),
+                "complemento": est.get("complemento"),
+                "bairro": est.get("bairro"),
+                "municipio": est.get("cidade", {}).get("nome"),
+                "uf": est.get("estado", {}).get("sigla"),
+                "cep": est.get("cep"),
+            }
+            return {k: v for k, v in dados_normalizados.items() if v is not None}
+        
+        return dados_brutos
