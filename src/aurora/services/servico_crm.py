@@ -1,5 +1,6 @@
+# src/aurora/services/servico_crm.py
+
 from typing import Dict, Any, Optional, List
-import asyncio
 import httpx
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -41,14 +42,13 @@ class ServicoCRM:
         self.cache = cache
 
     async def create_cliente_from_cnpj(self, cnpj: str) -> Dict[str, Any]:
-        """
-        Busca dados de um CNPJ, utilizando cache para otimizar, e cria um novo cliente.
-        """
+        """Cria um cliente a partir dos dados de um CNPJ, usando cache."""
         cnpj_limpo = "".join(filter(str.isdigit, cnpj))
 
         if self.cliente_repo.get_by_cnpj(cnpj=cnpj_limpo):
             raise HTTPException(
-                status_code=400, detail=f"Cliente com CNPJ {cnpj_limpo} já cadastrado."
+                status_code=400,
+                detail=f"Cliente com CNPJ {cnpj_limpo} já cadastrado.",
             )
 
         # Verificação de cache antes da chamada externa
@@ -60,28 +60,39 @@ class ServicoCRM:
             data = cached_data
         else:
             logger.info(
-                f"Dados do CNPJ {cnpj_limpo} não encontrados no cache. Buscando na API externa."
+                "Dados do CNPJ %s não encontrados no cache. "
+                "Buscando na API externa.",
+                cnpj_limpo,
             )
             try:
-                dados_brutos, fonte = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
+                dados_brutos, fonte = await self.cnpj_provider.get_cnpj_data(
+                    cnpj_limpo,
+                )
                 # Armazenamento do novo resultado no cache por 24 horas
                 await self.cache.set(cache_key, dados_brutos, expire=86400)
                 data = dados_brutos
             except HTTPException as e:
                 raise e
-            except Exception as e:
+            except Exception as exc:
                 logger.error(
-                    f"Erro inesperado ao consultar CNPJ {cnpj_limpo}: {str(e)}"
+                    "Erro inesperado ao consultar CNPJ %s: %s",
+                    cnpj_limpo,
+                    str(exc),
                 )
                 raise HTTPException(
-                    status_code=500, detail="Erro interno ao processar solicitação"
+                    status_code=500,
+                    detail="Erro interno ao processar solicitação",
                 )
 
         try:
             cliente_schema = self._map_cnpj_data_to_cliente(data, cnpj_limpo)
             return self.cliente_repo.create(cliente_schema.model_dump())
-        except Exception as e:
-            logger.error(f"Erro ao processar dados do CNPJ {cnpj_limpo}: {str(e)}")
+        except Exception as exc:
+            logger.error(
+                "Erro ao processar dados do CNPJ %s: %s",
+                cnpj_limpo,
+                str(exc),
+            )
             raise HTTPException(
                 status_code=422, detail="Erro ao processar dados do CNPJ"
             )
@@ -124,7 +135,10 @@ class ServicoCRM:
 
 
 # Funções auxiliares para operações CRUD
-def cadastrar_novo_cliente(db: Session, cliente_in: ClienteCreate) -> ClienteDB:
+def cadastrar_novo_cliente(
+    db: Session,
+    cliente_in: ClienteCreate,
+) -> ClienteDB:
     """Cadastra um novo cliente no banco de dados."""
     try:
         # Converte o schema Pydantic para um dicionário
@@ -141,15 +155,21 @@ def cadastrar_novo_cliente(db: Session, cliente_in: ClienteCreate) -> ClienteDB:
         db.commit()
         db.refresh(db_cliente)
         return db_cliente
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"Erro de integridade: Cliente com CNPJ {cliente_in.cnpj} já existe.",
+            detail=(
+                "Erro de integridade: Cliente com CNPJ ",
+                f"{cliente_in.cnpj} já existe.",
+            ),
         )
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao cadastrar cliente: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao cadastrar cliente: {exc}",
+        )
 
 
 def buscar_cliente_por_id(db: Session, cliente_id: int) -> Optional[ClienteDB]:
@@ -178,7 +198,7 @@ def atualizar_cliente(
     if not db_cliente:
         return None
 
-    # Converte o schema Pydantic para um dicionário, excluindo campos não definidos
+    # Converte o schema Pydantic em dicionário, excluindo campos não definidos
     if hasattr(cliente_update, "model_dump"):
         update_data = cliente_update.model_dump(exclude_unset=True)
     else:
@@ -225,14 +245,17 @@ async def call_cnpja_api(
             response = await client.get(url, headers=headers, timeout=10.0)
             response.raise_for_status()
             return response.json()
-    except httpx.HTTPStatusError as e:
-        status_code = e.response.status_code
+    except httpx.HTTPStatusError as exc:
+        status_code = exc.response.status_code
         try:
-            error_data = e.response.json()
-            detail = error_data.get("message", str(e))
-        except:
-            detail = str(e)
+            error_data = exc.response.json()
+            detail = error_data.get("message", str(exc))
+        except Exception:
+            detail = str(exc)
 
         raise HTTPException(status_code=status_code, detail=detail)
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Erro de conexão: {str(e)}")
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Erro de conexão: {exc}",
+        )

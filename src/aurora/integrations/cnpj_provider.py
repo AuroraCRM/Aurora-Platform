@@ -26,10 +26,19 @@ class CNPJaProvider(CNPJProvider):
     Implementação concreta do CNPJProvider que utiliza a API da CNPJá.
     """
 
-    def __init__(self, api_url: str = None, api_key: str = None, auth_type: str = None):
-        self.api_url = api_url or settings.CNPJA_API_URL.rstrip("/")
-        self.api_key = api_key or settings.CNPJA_API_KEY
-        self.auth_type = auth_type or settings.CNPJA_AUTH_TYPE or "Bearer"
+    def __init__(
+        self,
+        api_url: str | None = None,
+        api_key: str | None = None,
+        auth_type: str | None = None,
+    ) -> None:
+        api_url_env = getattr(settings, "CNPJA_API_URL", "")
+        api_key_env = getattr(settings, "CNPJA_API_KEY", "")
+        auth_env = getattr(settings, "CNPJA_AUTH_TYPE", "Bearer")
+
+        self.api_url = (api_url or api_url_env).rstrip("/")
+        self.api_key = api_key or api_key_env
+        self.auth_type = auth_type or auth_env
 
         if not self.api_url or not self.api_key:
             raise ValueError("URL ou Chave da API de CNPJ não configurada")
@@ -53,15 +62,19 @@ class CNPJaProvider(CNPJProvider):
                 response.raise_for_status()
                 dados = response.json()
                 return dados, "paga"
-        except httpx.HTTPStatusError as e:
-            status_code = e.response.status_code
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
             try:
-                error_data = e.response.json()
+                error_data = exc.response.json()
                 detail_message = error_data.get("message", "Erro desconhecido")
-            except:
-                detail_message = str(e)
+            except Exception:
+                detail_message = str(exc)
 
-            logger.error(f"Erro ao consultar CNPJ {cnpj_limpo}: {detail_message}")
+            logger.error(
+                "Erro ao consultar CNPJ %s: %s",
+                cnpj_limpo,
+                detail_message,
+            )
 
             if status_code == 401:
                 detail_message = "Falha na autenticação com a API CNPJá"
@@ -69,30 +82,43 @@ class CNPJaProvider(CNPJProvider):
             fallback_url = f"https://api.cnpja.com/open/{cnpj_limpo}"
             try:
                 async with httpx.AsyncClient() as client:
-                    fallback_response = await client.get(fallback_url, timeout=10.0)
+                    fallback_response = await client.get(
+                        fallback_url,
+                        timeout=10.0,
+                    )
                     fallback_response.raise_for_status()
                     dados = fallback_response.json()
                     return dados, "gratuita"
             except Exception as fallback_error:
                 logger.error(
-                    f"Fallback para API gratuita falhou: {str(fallback_error)}"
+                    "Fallback para API gratuita falhou: %s",
+                    str(fallback_error),
                 )
 
             raise HTTPException(
-                status_code=status_code, detail=f"Erro ao buscar CNPJ: {detail_message}"
+                status_code=status_code,
+                detail=f"Erro ao buscar CNPJ: {detail_message}",
             )
-        except httpx.RequestError as e:
-            logger.error(f"Erro de conexão ao consultar CNPJ {cnpj_limpo}: {str(e)}")
+        except httpx.RequestError as exc:
+            logger.error(
+                "Erro de conexão ao consultar CNPJ %s: %s",
+                cnpj_limpo,
+                str(exc),
+            )
             fallback_url = f"https://api.cnpja.com/open/{cnpj_limpo}"
             try:
                 async with httpx.AsyncClient() as client:
-                    fallback_response = await client.get(fallback_url, timeout=10.0)
+                    fallback_response = await client.get(
+                        fallback_url,
+                        timeout=10.0,
+                    )
                     fallback_response.raise_for_status()
                     dados = fallback_response.json()
                     return dados, "gratuita"
             except Exception as fallback_error:
                 logger.error(
-                    f"Fallback para API gratuita falhou: {str(fallback_error)}"
+                    "Fallback para API gratuita falhou: %s",
+                    str(fallback_error),
                 )
 
             raise HTTPException(
