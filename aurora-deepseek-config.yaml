@@ -1,26 +1,43 @@
-# Arquivo de configuração para guiar o DeepSeek-R1 nos padrões do Projeto Aurora
-# Versão 1.0
+# 🔒 Aurora DeepSeek Configuration - YAML de Tarefas Estratégicas
 
-# Define o estilo de código a ser seguido
-coding_style:
-  python:
-    indent: 4
-    max_line_length: 88  # Padrão do 'black' formatter
-    docstring_format: "google"
+# (mantido) suas configurações já existentes...
+# ...
 
-# Define as regras da nossa arquitetura de software
-architecture_rules:
-  # As camadas que compõem nossa Clean Architecture
-  layers: ['routers', 'services', 'repositories', 'schemas', 'models', 'integrations', 'workers']
-  
-  # Padrões para a criação de testes
-  testing:
-    framework: pytest
-    # Meta de cobertura de testes para novas funcionalidades
-    coverage_threshold: 90
+deepseek_tasks:
+  # ⚠️ Mantém todas as suas tarefas anteriores aqui (não sobrescrevo)
 
-# Regras customizadas de nomenclatura
-naming_conventions:
-  class_name: "PascalCase"
-  function_name: "snake_case"
-  variable_name: "snake_case"
+  # ✅ Nova tarefa adicionada
+  - id: aurora-struct-evolution
+    name: "Reestruturação Inteligente da Aurora Platform"
+    description: >
+      Investiga estratégias avançadas para reestruturar um sistema de CRM autônomo com IA,
+      permitindo que ele evolua por conta própria com segurança, rastreabilidade e estabilidade.
+
+    prompt: |
+      Você é um especialista em engenharia de software baseada em agentes, com foco em sistemas autônomos, conversacionais e de aprendizado contínuo.
+
+      Estou desenvolvendo um CRM inteligente chamado Aurora, com as seguintes características:
+      - Backend em Python (FastAPI), arquitetura Clean (routers, services, models, repositories)
+      - Banco PostgreSQL, mas com estrutura dinâmica: os usuários podem solicitar novos campos no modelo de cliente via chat, e o sistema os cria automaticamente, sem intervenção humana
+      - IA local com RAG, vetorização, Langchain, PLN e aprendizado contínuo
+      - Segurança e infraestrutura com Docker, Redis, Nginx com ModSecurity, Prometheus e Grafana
+      - Interface 100% conversacional, orientada por assistente (sem CRUD clássico)
+
+      Tendo isso em mente, pesquise e recomende:
+      1. A melhor forma de modelar dados dinâmicos em bancos relacionais ou híbridos (PostgreSQL, JSONB, ou alternativos como ArangoDB ou RedisJSON)
+      2. Estratégias para supervisão por agentes ReAct ou AutoGPT-like sobre mudanças de schema
+      3. Abordagens modernas de autoindexação semântica, organização de vetores, e representação adaptativa de conhecimento
+      4. Arquiteturas para CRMs ou ERPs com crescimento auto-dirigido
+      5. Como balancear flexibilidade e segurança em ambientes onde o usuário manipula a estrutura de dados via IA
+
+      Ferramentas em uso: SQLAlchemy + Pydantic v2, Poetry, Docker, Redis, CNPJá API, FastAPI, Langchain, vetorizadores locais, agentes ReAct.
+
+      O objetivo final é permitir que o sistema aprenda e se adapte sozinho — mantendo segurança, auditabilidade e performance.
+
+    agents_allowed:
+      - gem-aurora
+      - deepseek-coder
+      - deepseek-vision
+
+    mode: research
+    priority: high

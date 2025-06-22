@@ -1,7 +1,8 @@
+# src/aurora/models/cliente_model.py
+
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.sql import func
 from aurora.database_config import Base
-
 
 class ClienteDB(Base):
     __tablename__ = "clientes"

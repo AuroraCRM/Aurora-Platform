@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 
 from aurora.config import settings
 from aurora.database import get_db
-from aurora.repositories.cliente_repository import ClienteRepository # Assumindo que o usuário é um 'Cliente'
-from aurora.models.cliente_model import Cliente as ClienteModel
+from aurora.repositories.cliente_repository import ClienteRepository  # Assumindo que o usuário é um 'Cliente'
+from aurora.models.cliente_model import ClienteModel
 
 # --- Configurações de Segurança ---
 # Lidas a partir do nosso sistema de configuração centralizado
@@ -74,13 +74,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         token_type = payload.get("type")
         # CORREÇÃO (Falso Positivo): Adicionado '# nosec' para instruir o Bandit
         # a ignorar esta linha, pois 'access' é um tipo de token, não uma senha.
-        if token_type != "access": # nosec B105
+        if token_type != "access":  # nosec B105
             raise credentials_exception
 
     except JWTError:
         raise credentials_exception
     
-    user = ClienteRepository(db).get_by_email(email=username) # Busca o usuário pelo email (que é o 'sub')
+    user = ClienteRepository(db).get_by_email(email=username)  # Busca o usuário pelo email (que é o 'sub')
     if user is None:
         raise credentials_exception
     return user
@@ -91,7 +91,7 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[Cli
     de forma segura contra o banco de dados, eliminando o placeholder com senha hardcoded.
     """
     repo = ClienteRepository(db)
-    user = repo.get_by_email(email=username) # Ou get_by_username, se aplicável
+    user = repo.get_by_email(email=username)  # Ou get_by_username, se aplicável
     
     # Se o usuário não existe ou a senha não corresponde, retorna None
     if not user or not verify_password(password, user.hashed_password):
