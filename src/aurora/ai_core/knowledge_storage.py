@@ -1,175 +1,78 @@
-"""
-Módulo de Armazenamento de Conhecimento para o sistema de aprendizado contínuo da Aurora.
-
-Este módulo é responsável por armazenar e recuperar dados vetoriais e conhecimento
-estruturado para alimentar o ciclo de aprendizado contínuo da Aurora.
-"""
-
-from typing import Dict, Any, List, Optional, Union
-import json
-from datetime import datetime
-import uuid
+# src/aurora/ai_core/knowledge_storage.py
+import faiss
+import numpy as np
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
+# Dimensão dos vetores de embedding (ex: para modelos da OpenAI, geralmente é 1536)
+EMBEDDING_DIM = 1536
 
 class KnowledgeEntry(BaseModel):
-    """Modelo para uma entrada de conhecimento no sistema."""
-
-    entry_id: str = Field(..., description="Identificador único da entrada")
-    content: str = Field(..., description="Conteúdo textual da entrada")
-    embedding: Optional[List[float]] = Field(None, description="Vetor de embedding")
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Metadados da entrada"
-    )
-    source_id: Optional[str] = Field(None, description="ID da fonte de dados")
-    timestamp: datetime = Field(
-        default_factory=datetime.now, description="Data e hora de criação"
-    )
-    tags: List[str] = Field(default_factory=list, description="Tags para categorização")
-
-
-class KnowledgeStorage:
     """
-    Sistema de armazenamento de conhecimento vetorial.
-
-    Responsável por armazenar e recuperar dados vetoriais para o sistema
-    de aprendizado contínuo da Aurora.
+    Representa uma entrada única na base de conhecimento vetorial.
     """
+    content: str
+    embedding: List[float]
+    source_id: str = Field(..., description="Identificador único da fonte do conhecimento")
+    metadata: Optional[dict] = None
 
-    def __init__(self, vector_db_client=None):
+class VectorKnowledgeBase:
+    """
+    Gerencia uma base de conhecimento vetorial em memória usando FAISS.
+    """
+    def __init__(self):
+        # Inicializa um índice FAISS para busca de similaridade rápida
+        self.index = faiss.IndexFlatL2(EMBEDDING_DIM)
+        self.entries: List[KnowledgeEntry] = []
+
+    def add_entry(self, entry: KnowledgeEntry):
         """
-        Inicializa o sistema de armazenamento de conhecimento.
-
-        Args:
-            vector_db_client: Cliente para o banco de dados vetorial (opcional)
+        Adiciona uma nova entrada de conhecimento à base.
         """
-        self.vector_db_client = vector_db_client
-        # Simulação de armazenamento em memória para desenvolvimento
-        self._memory_storage = {}
+        if len(entry.embedding) != EMBEDDING_DIM:
+            raise ValueError(f"Dimensão do embedding inválida. Esperado {EMBEDDING_DIM}, recebido {len(entry.embedding)}")
 
-    def store_embedding(
-        self, data: str, embedding: List[float], metadata: Dict[str, Any]
-    ) -> str:
+        # Adiciona o embedding ao índice FAISS
+        embedding_np = np.array([entry.embedding]).astype('float32')
+        self.index.add(embedding_np)
+        
+        # Armazena a entrada completa para recuperação de metadados
+        self.entries.append(entry)
+
+    def search(self, query_embedding: List[float], k: int = 5) -> List[KnowledgeEntry]:
         """
-        Armazena um embedding no banco de dados vetorial.
-
-        Args:
-            data: Dados textuais originais
-            embedding: Vetor de embedding
-            metadata: Metadados associados
-
-        Returns:
-            str: ID da entrada armazenada
+        Busca as 'k' entradas mais similares a um embedding de consulta.
         """
-        entry_id = str(uuid.uuid4())
+        if not self.entries:
+            return []
 
-        entry = KnowledgeEntry(
-            entry_id=entry_id,
-            content=data,
+        query_np = np.array([query_embedding]).astype('float32')
+        distances, indices = self.index.search(query_np, k)
+
+        # Retorna as entradas completas correspondentes aos índices encontrados
+        results = [self.entries[i] for i in indices[0] if i < len(self.entries)]
+        return results
+
+    def _create_mock_entry(self) -> KnowledgeEntry:
+        """
+        Função auxiliar para criar uma entrada de teste.
+        """
+        content = "Este é um documento de teste sobre a Aurora."
+        embedding = list(np.random.rand(EMBEDDING_DIM))
+        
+        # CORREÇÃO: O argumento 'source_id' estava faltando na criação do objeto.
+        return KnowledgeEntry(
+            content=content,
             embedding=embedding,
-            metadata=metadata,
-            timestamp=datetime.now(),
+            source_id="mock_doc_001" 
         )
 
-        # TODO: Integração com Vector DB real
-        # if self.vector_db_client:
-        #     self.vector_db_client.upsert(
-        #         vectors=[embedding],
-        #         ids=[entry_id],
-        #         metadata=[metadata]
-        #     )
-
-        # Armazenamento em memória para simulação
-        self._memory_storage[entry_id] = entry.dict()
-
-        return entry_id
-
-    def retrieve_similar(
-        self, query_embedding: List[float], top_k: int = 5
-    ) -> List[Dict[str, Any]]:
-        """
-        Recupera entradas similares a um embedding de consulta.
-
-        Args:
-            query_embedding: Embedding da consulta
-            top_k: Número máximo de resultados
-
-        Returns:
-            List[Dict[str, Any]]: Lista de entradas similares
-        """
-        # TODO: Implementar busca real em Vector DB
-        # if self.vector_db_client:
-        #     results = self.vector_db_client.search(
-        #         query_vector=query_embedding,
-        #         top_k=top_k
-        #     )
-        #     return results
-
-        # Simulação de resultados para desenvolvimento
-        return list(self._memory_storage.values())[
-            : min(top_k, len(self._memory_storage))
-        ]
-
-    def store_structured_knowledge(
-        self, entity_type: str, entity_data: Dict[str, Any]
-    ) -> str:
-        """
-        Armazena conhecimento estruturado sobre uma entidade.
-
-        Args:
-            entity_type: Tipo da entidade (ex: cliente, produto)
-            entity_data: Dados da entidade
-
-        Returns:
-            str: ID da entrada armazenada
-        """
-        entry_id = f"{entity_type}_{uuid.uuid4()}"
-
-        # TODO: Implementar armazenamento estruturado
-        # Possíveis integrações:
-        # - Graph database para relações entre entidades
-        # - Document store para dados estruturados
-        # - Knowledge graph para representação semântica
-
-        return entry_id
-
-    def update_entry(self, entry_id: str, updates: Dict[str, Any]) -> bool:
-        """
-        Atualiza uma entrada existente.
-
-        Args:
-            entry_id: ID da entrada
-            updates: Atualizações a serem aplicadas
-
-        Returns:
-            bool: True se a atualização foi bem-sucedida
-        """
-        if entry_id not in self._memory_storage:
-            return False
-
-        # Atualiza a entrada em memória
-        self._memory_storage[entry_id].update(updates)
-
-        # TODO: Implementar atualização em Vector DB real
-
-        return True
-
-    def delete_entry(self, entry_id: str) -> bool:
-        """
-        Remove uma entrada do armazenamento.
-
-        Args:
-            entry_id: ID da entrada
-
-        Returns:
-            bool: True se a remoção foi bem-sucedida
-        """
-        if entry_id not in self._memory_storage:
-            return False
-
-        # Remove a entrada da memória
-        del self._memory_storage[entry_id]
-
-        # TODO: Implementar remoção em Vector DB real
-
-        return True
+# Exemplo de uso (pode ser movido para testes)
+if __name__ == "__main__":
+    kb = VectorKnowledgeBase()
+    mock_entry = kb._create_mock_entry()
+    kb.add_entry(mock_entry)
+    
+    # Simula uma busca
+    search_result = kb.search(mock_entry.embedding, k=1)
+    print("Busca retornou:", search_result[0].content)

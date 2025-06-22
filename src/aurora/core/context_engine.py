@@ -1,40 +1,42 @@
 # src/aurora/core/context_engine.py
-import os
-import json
-import glob
+from typing import Dict, Any, Optional # CORREÇÃO CRÍTICA A SER APLICADA
 import yaml
-import uuid
-from datetime import datetime, timezone
+from aurora.config import settings
 
 class ContextEngine:
-    def __init__(self, eskb_path="eskb"):
-        self.eskb_path = os.path.abspath(eskb_path)
-        self.event_log_path = os.path.join(self.eskb_path, "event_log.jsonl")
-        self.knowledge = self._load_knowledge()
+    """
+    Motor de contexto responsável por carregar e fornecer conhecimento
+    de domínio para outros módulos da aplicação.
+    """
+    def __init__(self):
+        self.knowledge_file = settings.get("KNOWLEDGE_FILE_PATH", "knowledge.yaml")
+        self.knowledge: Dict[str, Any] = self._load_knowledge()
 
-    def _load_knowledge(self) -> dict:
-        knowledge = {"events": [], "yaml_data": {}}
-        if os.path.exists(self.event_log_path):
-            with open(self.event_log_path, "r", encoding="utf-8") as f:
-                knowledge["events"] = [json.loads(line) for line in f if line.strip()]
-        # Adicione a lógica para carregar os YAMLs se necessário no futuro
-        return knowledge
+    def _load_knowledge(self) -> Dict[str, Any]:
+        """
+        Carrega o arquivo de conhecimento (YAML) do disco.
+        Retorna um dicionário vazio se o arquivo não for encontrado ou ocorrer um erro.
+        """
+        try:
+            with open(self.knowledge_file, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                return data if isinstance(data, dict) else {}
+        except FileNotFoundError:
+            print(f"AVISO: Arquivo de conhecimento '{self.knowledge_file}' não encontrado.")
+            return {}
+        except yaml.YAMLError as e:
+            print(f"ERRO: Falha ao parsear o arquivo de conhecimento YAML: {e}")
+            return {}
 
-    def get_context_for_task(self, task_description: str) -> str:
-        keywords = task_description.lower().split()
-        relevant_events = [
-            e for e in self.knowledge["events"]
-            if any(kw in e.get("summary", "").lower() for kw in keywords)
-        ]
-        context = "### Histórico Relevante:\n"
-        if not relevant_events:
-            context += "- Nenhum evento relevante encontrado.\n"
-        for event in relevant_events[-5:]:
-            context += f"- [{event.get('timestamp')}] {event.get('event_type')}: {event.get('summary')} (Status: {event.get('status')})\n"
-        return context
+    def get_context(self, domain: str, key: str) -> Optional[Any]:
+        """
+        Obtém uma informação de contexto específica de um domínio.
 
-    def log_event(self, event_data: dict):
-        event_data.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
-        event_data.setdefault("event_id", f"evt_{uuid.uuid4().hex[:16]}")
-        with open(self.event_log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(event_data, ensure_ascii=False) + "\n")
+        Args:
+            domain (str): O domínio do conhecimento (ex: 'crm', 'pln').
+            key (str): A chave da informação desejada.
+
+        Returns:
+            Optional[Any]: O valor da informação ou None se não for encontrado.
+        """
+        return self.knowledge.get(domain, {}).get(key)

@@ -1,46 +1,54 @@
 # src/aurora/cache/redis_cache.py
-
-from typing import Any, Optional
+import redis
 import json
-# --- CORREÇÃO: Importar o cliente assíncrono da biblioteca 'redis' oficial ---
-from redis.asyncio import Redis
+from typing import Any, Optional
 from aurora.config import settings
 
-class RedisCache:
-    """
-    Encapsula a lógica de interação com o cache do Redis,
-    utilizando o cliente assíncrono oficial da biblioteca redis-py.
-    """
-    def __init__(self):
-        # A URL é obtida diretamente do módulo de configurações centralizado.
-        # --- CORREÇÃO: Usa 'Redis.from_url' em vez de 'aioredis.from_url' ---
-        self.redis_client: Redis = Redis.from_url(
-            settings.REDIS_URL,
-            encoding="utf-8",
-            decode_responses=True
-        )
-    
-    async def get(self, key: str) -> Optional[Any]:
-        """Recupera um valor do cache."""
-        # Usa o cliente oficial
-        data = await self.redis_client.get(key)
-        if data:
-            return json.loads(data)
+# Configuração da conexão com o Redis a partir do Dynaconf
+REDIS_HOST = settings.get("REDIS_HOST", "localhost")
+REDIS_PORT = settings.get("REDIS_PORT", 6379)
+REDIS_DB = settings.get("REDIS_DB", 0)
+
+try:
+    # Pool de conexões para reutilização eficiente
+    redis_pool = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+    redis_client = redis.Redis(connection_pool=redis_pool)
+    # Testa a conexão na inicialização
+    redis_client.ping()
+    print("Conexão com o Redis estabelecida com sucesso.")
+except redis.exceptions.ConnectionError as e:
+    print(f"ERRO: Não foi possível conectar ao Redis em {REDIS_HOST}:{REDIS_PORT}. {e}")
+    redis_client = None
+
+def get_cache(key: str) -> Optional[Any]:
+    """Busca um valor no cache do Redis pela chave."""
+    if not redis_client:
         return None
     
-    async def set(self, key: str, value: Any, expire: int = None) -> bool:
-        """Armazena um valor no cache com tempo de expiração opcional."""
-        data = json.dumps(value)
-        # Usa o cliente oficial
-        if expire:
-            return await self.redis_client.setex(key, expire, data)
-        return await self.redis_client.set(key, data)
-    
-    async def delete(self, key: str) -> int:
-        """Remove um valor do cache."""
-        return await self.redis_client.delete(key)
-    
-    async def clear(self) -> bool:
-        """Limpa todo o cache."""
-        return await self.redis_client.flushdb()
+    cached_value = redis_client.get(key)
+    if cached_value:
+        return json.loads(cached_value)
+    return None
 
+def set_cache(key: str, value: Any, expire: Optional[int] = None):
+    """
+    Armazena um valor no cache do Redis com um tempo de expiração opcional.
+
+    Args:
+        key (str): A chave para o valor a ser armazenado.
+        value (Any): O valor (deve ser serializável em JSON).
+        expire (Optional[int]): Tempo em segundos para a chave expirar.
+                                 O padrão é None (não expira).
+    """
+    if not redis_client:
+        return
+        
+    # CORREÇÃO: O tipo de 'expire' agora é `Optional[int]`, compatível com o padrão `None`.
+    # A lógica de serialização e armazenamento permanece a mesma.
+    redis_client.set(key, json.dumps(value), ex=expire)
+
+def clear_cache(key: str):
+    """Remove uma chave do cache."""
+    if not redis_client:
+        return
+    redis_client.delete(key)

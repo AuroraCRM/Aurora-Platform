@@ -1,3 +1,10 @@
+# patch_cnpj_adapter.py
+import os
+
+TARGET_FILE_PATH = "src/integrations/cnpj_adapter.py"
+
+# Este é o conteúdo exato e correto que o arquivo deve ter.
+CORRECT_CONTENT = """\
 # src/integrations/cnpj_adapter.py
 from typing import Any, Dict, Optional
 import httpx
@@ -10,13 +17,13 @@ API_TOKEN = settings.get("CNPJA_API_TOKEN")
 
 
 class CNPJaAdapter:
-    """
+    \"\"\"
     Adaptador para se comunicar com a API externa do CNPJá.
     Encapsula a lógica de requisições HTTP e tratamento de respostas.
-    """
+    \"\"\"
 
     async def get_cnpj_details(self, cnpj: str) -> Dict[str, Any]:
-        """
+        \"\"\"
         Busca os detalhes de um CNPJ na API do CNPJá.
 
         Args:
@@ -25,7 +32,7 @@ class CNPJaAdapter:
         Returns:
             Dict[str, Any]: Um dicionário com os dados da empresa.
                             Retorna um dicionário vazio se não encontrar ou ocorrer um erro.
-        """
+        \"\"\"
         if not API_TOKEN:
             # Lança um erro claro se a configuração essencial estiver faltando
             raise ValueError("API_TOKEN para CNPJá não foi configurado.")
@@ -48,3 +55,33 @@ class CNPJaAdapter:
         except httpx.RequestError as e:
             print(f"Erro de requisição ao buscar CNPJ {cnpj}: {e}")
             return {} # Retorna um dicionário vazio em caso de erro de rede
+"""
+
+def apply_patch():
+    """Verifica e aplica o patch no arquivo alvo."""
+    print("="*60)
+    print(f"PATCH AUTOMATIZADO PARA: {TARGET_FILE_PATH}")
+    print("="*60)
+
+    if not os.path.exists(TARGET_FILE_PATH):
+        print(f"❌ ERRO: O arquivo alvo não foi encontrado em '{TARGET_FILE_PATH}'.")
+        return
+
+    try:
+        with open(TARGET_FILE_PATH, 'r', encoding='utf-8') as f:
+            current_content = f.read()
+
+        if current_content == CORRECT_CONTENT:
+            print("✅ O arquivo já está atualizado. Nenhuma ação necessária.")
+        else:
+            print("🟡 ALERTA: O conteúdo do arquivo está desatualizado.")
+            print("    -> Aplicando patch agora...")
+            with open(TARGET_FILE_PATH, 'w', encoding='utf-8') as f:
+                f.write(CORRECT_CONTENT)
+            print("✅ Patch aplicado com sucesso!")
+            
+    except Exception as e:
+        print(f"❌ ERRO INESPERADO: Falha ao ler ou escrever no arquivo. {e}")
+
+if __name__ == "__main__":
+    apply_patch()

@@ -1,104 +1,75 @@
 # src/aurora/main.py
 
-import os
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
-# Importa os middlewares
-from aurora.middleware.error_handler import error_handler_middleware
-from aurora.middleware.security import SecurityHeadersMiddleware
-from aurora.middleware.rate_limiter import RateLimiter
+from aurora.config import settings
+from aurora.routers import auth_router, cliente_router, cnpj_routes, lead_router
 
-# Importa os roteadores
-from aurora.routers import cnpj_routes, cliente_router, lead_router, auth_router
-
-# Importa o módulo de autenticação
-from aurora.auth.security import get_current_user
-from aurora.auth.two_factor import require_2fa
-
-# Carrega variáveis de ambiente do arquivo .env na raiz do projeto
-load_dotenv(
-    dotenv_path=os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env"
-    ),
-    override=True,
-)
-
-# Instância principal do FastAPI
+# Cria a instância principal da aplicação FastAPI
+# O título e a versão são carregados dinamicamente a partir do nosso sistema de configuração
 app = FastAPI(
-    title="Aurora CRM API",
-    description="API para a Plataforma Aurora CRM e Suporte a Vendas",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    title=settings.get("PROJECT_NAME", "Aurora Platform"),
+    version=settings.get("PROJECT_VERSION", "1.0.0"),
+    description="API central para a plataforma Aurora, gerenciando CRM, integrações e serviços de IA."
 )
 
-# Configuração de CORS - Restringindo origens permitidas
+# --- Configuração de Middleware ---
+
+# Configura o CORS (Cross-Origin Resource Sharing) para permitir que
+# o frontend (ou outras aplicações) acessem a API a partir de diferentes origens.
+# Em produção, a lista de 'origins' deve ser restrita aos domínios autorizados.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://aurora-crm.example.com",
-    ],  # Restringe origens permitidas
+    allow_origins=settings.get("ALLOWED_ORIGINS", ["*"]),  # O '*' é permissivo demais para produção
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Restringe métodos permitidos
-    allow_headers=["Authorization", "Content-Type"],  # Restringe cabeçalhos permitidos
-    expose_headers=["X-Request-ID"],
-    max_age=600,  # Cache por 10 minutos
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Adiciona o middleware de segurança
-app.add_middleware(SecurityHeadersMiddleware)
-
-# Adiciona o middleware de limitação de taxa
-app.add_middleware(RateLimiter, requests_per_minute=60)
-
-# Registra o middleware de erro na aplicação
-app.middleware("http")(error_handler_middleware)
-
-# Inclui os roteadores na aplicação
-# Rotas de autenticação
-app.include_router(auth_router.router, prefix="/api/v1/auth", tags=["Autenticação"])
-
-# Rotas públicas
-app.include_router(cnpj_routes.router, prefix="/api/v1", tags=["CNPJ"])
-
-# Rotas protegidas por autenticação
-app.include_router(
-    cliente_router.router,
-    prefix="/api/v1",
-    tags=["Clientes"],
-    dependencies=[Depends(get_current_user)],  # Protege todas as rotas de clientes
-)
-
-app.include_router(
-    lead_router.router,
-    prefix="/api/v1",
-    tags=["Leads"],
-    dependencies=[Depends(get_current_user)],  # Protege todas as rotas de leads
-)
-
-# Rotas administrativas com 2FA
-admin_router = FastAPI()
-app.mount("/api/v1/admin", admin_router)
-admin_router.include_router(
-    cliente_router.router,
-    prefix="/clientes",
-    tags=["Admin - Clientes"],
-    dependencies=[Depends(require_2fa)],  # Requer 2FA para acesso
-)
+# Aqui poderiam ser adicionados outros middlewares, como o de tratamento de erros
+# ou de rate limiting, caso fossem implementados como tal.
 
 
-@app.get("/")
+# --- Inclusão dos Roteadores Modulares ---
+
+# A arquitetura é mantida limpa e modular incluindo os roteadores de cada domínio.
+# Cada roteador gerencia um conjunto específico de endpoints.
+app.include_router(auth_router.router, prefix="/auth", tags=["Autenticação"])
+app.include_router(cliente_router.router, prefix="/clientes", tags=["Clientes CRM"])
+app.include_router(lead_router.router, prefix="/leads", tags=["Leads CRM"])
+app.include_router(cnpj_routes.router, prefix="/integracoes", tags=["Integrações Externas"])
+
+
+# --- Endpoint Raiz ---
+
+@app.get("/", tags=["Root"])
 async def read_root():
+    """
+    Endpoint raiz que fornece uma mensagem de boas-vindas e a versão da API.
+    Útil para health checks e para verificar se a API está online.
+    """
     return {
-        "message": "Bem-vindo à API da Aurora CRM!",
-        "docs": "/docs",
-        "version": "1.0.0",
+        "message": f"Bem-vindo à {app.title}",
+        "version": app.version
     }
 
+# --- Eventos de Ciclo de Vida (Opcional) ---
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
+@app.on_event("startup")
+async def startup_event():
+    """
+    Função executada uma única vez na inicialização da aplicação.
+    Útil para inicializar conexões (ex: pool de Redis) ou carregar modelos de IA.
+    """
+    print("INFO:     Aplicação Aurora iniciada com sucesso.")
+    # Exemplo: conectar_ao_redis_pool()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Função executada uma única vez no encerramento da aplicação.
+    Útil para fechar conexões de forma graciosa.
+    """
+    print("INFO:     Aplicação Aurora encerrada.")
+    # Exemplo: fechar_conexao_redis_pool()

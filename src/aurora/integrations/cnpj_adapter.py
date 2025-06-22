@@ -1,4 +1,6 @@
-# src/integrations/cnpj_adapter.py
+# ATENÇÃO: ESTE É O CONTEÚDO FINAL E CORRIGIDO. 
+# POR FAVOR, SUBSTITUA O ARQUIVO INTEIRO.
+
 from typing import Any, Dict, Optional
 import httpx
 from aurora.config import settings

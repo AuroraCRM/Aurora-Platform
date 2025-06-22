@@ -1,32 +1,13 @@
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
+# src/aurora/database_config.py
 
-# Carrega variáveis de ambiente do arquivo .env
-load_dotenv(override=True)
+from sqlalchemy.orm import DeclarativeBase
 
-# Configuração do banco de dados
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./aurora.db")
-
-if not DATABASE_URL:
-    print("Aviso: Usando banco de dados SQLite local")
-
-# Cria o engine do SQLAlchemy
-engine = create_engine(DATABASE_URL)
-
-# Cria uma classe de sessão local
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Cria a classe Base da qual todos os modelos irão herdar
-Base = declarative_base()
-
-
-# Função para obter uma sessão do banco de dados
-def get_db_session():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# CORREÇÃO: No SQLAlchemy 2.0, a 'Base' declarativa é uma classe da qual os modelos herdam.
+# Isso substitui o antigo 'declarative_base()'. Todos os nossos modelos de ORM
+# (como Cliente, Lead, etc.) devem herdar desta classe 'Base'.
+class Base(DeclarativeBase):
+    """
+    Classe base para todos os modelos ORM do projeto Aurora.
+    Ela serve como um registro central para os metadados do SQLAlchemy.
+    """
+    pass
