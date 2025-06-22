@@ -41,4 +41,5 @@ logs/
 
 # OS specific
 .DS_Store
-Thumbs.db
+Thumbs.db\n# Banco de dados de teste\n*.db\n*.db-journal
+\n# Log de eventos da Fábrica Aurora\nevent_log.jsonl
