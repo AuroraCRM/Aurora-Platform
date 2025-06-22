@@ -1,3 +1,6 @@
+![Tests](https://github.com/AuroraCRM/Aurora-Core/actions/workflows/tests.yml/badge.svg)
+
+
 ## Sobre o Projeto
 Aurora é uma plataforma de CRM inteligente que atua como assistente de IA, auxiliando empresas na gestão de clientes e na automação de processos.
 
