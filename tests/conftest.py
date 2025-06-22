@@ -1,6 +1,6 @@
 import pytest
 from starlette.testclient import TestClient
-from src.aurora.main import app
+from aurora.aurora.main import app
 import os
 
 

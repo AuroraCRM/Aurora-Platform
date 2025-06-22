@@ -17,10 +17,7 @@ class ContextEngine:
         if os.path.exists(self.event_log_path):
             with open(self.event_log_path, "r", encoding="utf-8") as f:
                 knowledge["events"] = [json.loads(line) for line in f if line.strip()]
-        for yaml_file in glob.glob(os.path.join(self.eskb_path, "*.yaml")):
-            with open(yaml_file, "r", encoding="utf-8") as f:
-                key = os.path.basename(yaml_file).split('.')[0]
-                knowledge["yaml_data"][key] = yaml.safe_load(f)
+        # Adicione a lógica para carregar os YAMLs se necessário no futuro
         return knowledge
 
     def get_context_for_task(self, task_description: str) -> str:
@@ -34,13 +31,9 @@ class ContextEngine:
             context += "- Nenhum evento relevante encontrado.\n"
         for event in relevant_events[-5:]:
             context += f"- [{event.get('timestamp')}] {event.get('event_type')}: {event.get('summary')} (Status: {event.get('status')})\n"
-        context += "\n### Nova Tarefa:"
         return context
 
     def log_event(self, event_data: dict):
-        required_fields = {"event_type", "task_id", "status", "summary"}
-        if not required_fields.issubset(event_data):
-            raise ValueError("Evento incompleto. Faltam campos obrigatórios.")
         event_data.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
         event_data.setdefault("event_id", f"evt_{uuid.uuid4().hex[:16]}")
         with open(self.event_log_path, "a", encoding="utf-8") as f:
