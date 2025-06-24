@@ -22,19 +22,26 @@ FILES_TO_VERIFY = {
 
 # --- Funções de Verificação ---
 
+
 def print_header(title):
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"🔬 {title}")
-    print("="*60)
+    print("=" * 60)
+
 
 def verify_python_version():
     print_header("Verificação da Versão do Python")
     version_info = sys.version_info
-    print(f"Versão detectada: {version_info.major}.{version_info.minor}.{version_info.micro}")
+    print(
+        f"Versão detectada: {version_info.major}.{version_info.minor}.{version_info.micro}"
+    )
     if version_info.major < 3 or version_info.minor < 10:
-        print("❌ ALERTA: Versão do Python é mais antiga que a 3.10. Recomenda-se Python 3.10+.")
+        print(
+            "❌ ALERTA: Versão do Python é mais antiga que a 3.10. Recomenda-se Python 3.10+."
+        )
     else:
         print("✅ Versão do Python compatível.")
+
 
 def verify_library_versions():
     print_header("Verificação das Versões das Bibliotecas")
@@ -49,6 +56,7 @@ def verify_library_versions():
         except PackageNotFoundError:
             print(f"- {lib:<15}: ❌ NÃO ENCONTRADA!")
 
+
 def verify_file_contents():
     print_header("Verificação do Conteúdo dos Arquivos Corrigidos")
     all_files_ok = True
@@ -58,11 +66,11 @@ def verify_file_contents():
             print(f"  ❌ ERRO: Arquivo não encontrado.")
             all_files_ok = False
             continue
-        
+
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             if expected_string in content:
                 print(f"  ✅ Conteúdo esperado encontrado.")
             else:
@@ -72,11 +80,15 @@ def verify_file_contents():
         except Exception as e:
             print(f"  ❌ ERRO ao ler o arquivo: {e}")
             all_files_ok = False
-    
+
     if all_files_ok:
-        print("\n✅ Todos os arquivos parecem estar com as últimas correções aplicadas.")
+        print(
+            "\n✅ Todos os arquivos parecem estar com as últimas correções aplicadas."
+        )
     else:
-        print("\n❌ ALERTA: Um ou mais arquivos não estão atualizados. As correções anteriores precisam ser reaplicadas.")
+        print(
+            "\n❌ ALERTA: Um ou mais arquivos não estão atualizados. As correções anteriores precisam ser reaplicadas."
+        )
 
 
 # --- Execução Principal ---
@@ -85,6 +97,6 @@ if __name__ == "__main__":
     verify_python_version()
     verify_library_versions()
     verify_file_contents()
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Diagnóstico concluído.")
-    print("="*60)
+    print("=" * 60)

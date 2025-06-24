@@ -5,7 +5,10 @@ import asyncio
 import logging
 
 # Configuração básica de logging para este script
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 async def check_environment():
     """
@@ -14,7 +17,7 @@ async def check_environment():
     print("-" * 50)
     print("Iniciando Verificação do Ambiente Aurora...")
     print("-" * 50)
-    
+
     # 1. Verificar Versão do Python
     logging.info(f"Versão do Python: {sys.version}")
     if sys.version_info < (3, 10):
@@ -29,7 +32,7 @@ async def check_environment():
         import sqlalchemy
         import httpx
         import aioredis
-        
+
         logging.info("Verificação de bibliotecas principais: OK")
         logging.info(f"  - FastAPI version: {fastapi.__version__}")
         logging.info(f"  - Pydantic version: {pydantic.__version__}")
@@ -38,46 +41,58 @@ async def check_environment():
 
     except ImportError as e:
         logging.error(f"ERRO CRÍTICO: Dependência faltando! {e.name}")
-        logging.error("Execute 'pip install -r requirements.txt' (e requirements-test.txt) para instalar as dependências.")
+        logging.error(
+            "Execute 'pip install -r requirements.txt' (e requirements-test.txt) para instalar as dependências."
+        )
         return
-        
+
     # 3. Verificar Conectividade com Serviços Externos (opcional, mas recomendado)
     print("-" * 50)
     logging.info("Verificando conectividade com serviços...")
-    
+
     # Tenta conectar com o Redis
     try:
-        from aurora.config import settings
+        from aurora_platform.config import settings
+
         # Usa um timeout curto para não prender o script
         redis_client = aioredis.from_url(settings.REDIS_URL)
         await asyncio.wait_for(redis_client.ping(), timeout=3.0)
         logging.info("Conexão com Redis: OK")
         await redis_client.close()
     except Exception as e:
-        logging.warning(f"AVISO: Não foi possível conectar ao Redis em '{settings.REDIS_URL}'.")
+        logging.warning(
+            f"AVISO: Não foi possível conectar ao Redis em '{settings.REDIS_URL}'."
+        )
         logging.warning(f"   -> Causa: {e}")
-        logging.warning("   -> Certifique-se de que seu container Docker do Redis está em execução.")
+        logging.warning(
+            "   -> Certifique-se de que seu container Docker do Redis está em execução."
+        )
 
     # Tenta conectar com o Banco de Dados
     try:
-        from aurora.database_config import engine
-        with engine.connect() as connection:
-            logging.info("Conexão com Banco de Dados (PostgreSQL): OK")
+        from aurora_platform.database import engine # Corrigido para importar de database.py
+
+        with engine.connect() as conn:  # Renomeado para conn
+            logging.info(f"Conexão com Banco de Dados ({engine.url.drivername}): OK") # Usado engine.url
     except Exception as e:
-        logging.warning(f"AVISO: Não foi possível conectar ao Banco de Dados.")
+        logging.warning("AVISO: Não foi possível conectar ao Banco de Dados.") # Removido f-string
         logging.warning(f"   -> Causa: {e}")
-        logging.warning("   -> Certifique-se de que seu container Docker do PostgreSQL está em execução.")
+        logging.warning(
+            "   -> Certifique-se de que seu container Docker do PostgreSQL está em execução."
+        )
 
     print("-" * 50)
     logging.info("Verificação do ambiente concluída.")
     print("-" * 50)
 
+
 if __name__ == "__main__":
-    # Garante que a importação de 'aurora.config' funcione corretamente
-    # adicionando o diretório 'src' ao path do sistema.
-    import sys
-    import os
-    # Adiciona o diretório 'src' ao path para que possamos importar de 'aurora'
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-    
+    # 'sys' e 'os' já foram importados no topo do arquivo.
+    # Esta lógica de path pode ser desnecessária se o script for executado com poetry run
+    # ou se PYTHONPATH estiver configurado.
+    # Adicionar ao path apenas se não estiver lá.
+    src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../src"))
+    if src_path not in sys.path:
+        sys.path.insert(0, src_path)
+
     asyncio.run(check_environment())

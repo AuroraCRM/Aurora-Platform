@@ -1,25 +1,28 @@
 from fastapi.testclient import TestClient
-from aurora.main import app
+# from aurora_platform.main import app # Removido F401
 
-# Cria um cliente de teste para a nossa aplicação
-client = TestClient(app)
+# Não precisamos mais instanciar TestClient(app) globalmente aqui,
+# pois a fixture test_client o fornecerá.
 
-def test_read_root():
+
+def test_read_root(test_client: TestClient):  # Usa a fixture test_client
     """
     Testa se a rota raiz está funcionando corretamente.
     """
-    response = client.get("/")
+    response = test_client.get("/")  # Usa a fixture
     assert response.status_code == 200
+    # Ajustado para corresponder à nova resposta do endpoint raiz
     assert response.json() == {
-        "message": "Bem-vindo à API da Aurora CRM!",
-        "docs": "/docs",
-        "version": "1.0.0"
+        "message": "Bem-vindo à Aurora Platform",
+        "version": "1.0.0",  # Assumindo que app.version é "1.0.0"
+        "docs_url": "/docs",
     }
 
-def test_docs_redirect():
+
+def test_docs_redirect(test_client: TestClient):  # Usa a fixture test_client
     """
     Testa se a rota /docs (Swagger UI) está acessível.
     """
-    response = client.get("/docs")
+    response = test_client.get("/docs")  # Usa a fixture
     assert response.status_code == 200
     assert "Swagger UI" in response.text

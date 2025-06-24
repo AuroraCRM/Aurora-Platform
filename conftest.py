@@ -5,6 +5,7 @@ import sys
 import os
 import pytest
 from fastapi.testclient import TestClient
+from aurora_platform.main import app # Mover importação de app para cá
 
 # --- CORREÇÃO CRUCIAL ---
 # Adiciona o diretório 'src' ao início do path de busca do Python.
@@ -26,8 +27,7 @@ os.environ.setdefault("CNPJA_FREE_URL", "https://fake-free-api.com")
 os.environ.setdefault("CNPJWS_PUBLIC_URL", "https://fake-free-api.com")
 # -------------------------
 
-# Agora que o path está correto, a importação do 'app' deve funcionar.
-from aurora.main import app
+# A importação de 'app' foi movida para o topo.
 
 
 # Fixture que cria um cliente de teste para a nossa aplicação.
