@@ -1,42 +1,39 @@
 # run_task.py
-import sys
+
 import argparse
-from pathlib import Path
-
-# --- CORREÇÃO DE PATH DEFINITIVA ---
-FILE = Path(__file__).resolve()
-ROOT = FILE.parent
-SRC_ROOT = ROOT / "src"
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
-# --- FIM DA CORREÇÃO ---
-
+# A importação agora busca o ContextEngine de sua nova localização estruturada
 from aurora.core.context_engine import ContextEngine
+# Supondo que o agente de IA também terá sua classe em um local apropriado
+# from aurora.agents.base_agent import BaseAIAgent 
 
 def main():
+    """Função principal para executar o orquestrador de tarefas."""
     parser = argparse.ArgumentParser(description="Orquestrador da Sinapse Aurora")
-    parser.add_argument("task_description", type=str, help="Descrição da tarefa")
+    parser.add_argument("task_description", type=str, help="Descrição da tarefa a ser executada pela IA.")
     args = parser.parse_args()
 
-    engine = ContextEngine()
-    context = engine.get_context_for_task(args.task_description)
+    print(f"Ordem de Serviço Recebida: '{args.task_description}'")
 
-    prompt = f"{context}\n{args.task_description}"
+    # 1. Obter Contexto
+    # A instância do ContextEngine é criada.
+    engine = ContextEngine(knowledge_file='knowledge.yaml')
+    
+    # A chamada ao método foi simplificada para invocar o objeto diretamente.
+    # CORREÇÃO: de 'engine.get_context_for_task(...)' para 'engine(...)'
+    context = engine(args.task_description)
+    
+    print("Contexto Gerado:", context)
 
-    print("\n" + "="*50)
-    print("CONTEXTO GERADO PARA O AGENTE:")
-    print("="*50)
-    print(prompt)
-    print("="*50 + "\n")
+    # 2. Selecionar e Executar o Agente de IA (lógica futura)
+    # agent = select_agent_for_task(context['task'])
+    # result = agent.run(context)
+    # print("Resultado da Tarefa:", result)
+    
+    # 3. Registrar o resultado (lógica futura)
+    # log_event(task_description, context, result)
+    
+    print("\nAVISO: Execução do agente e logging ainda não implementados.")
 
-    engine.log_event({
-        "event_type": "task_prompt_generated",
-        "task_id": "USER_TASK",
-        "status": "completed",
-        "summary": f"Prompt gerado para: {args.task_description[:100]}...",
-        "agent": "Aurora"
-    })
-    print("✅ Prompt gerado e evento registrado no ESKB com sucesso!")
 
 if __name__ == "__main__":
     main()

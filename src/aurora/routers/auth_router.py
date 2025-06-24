@@ -1,47 +1,47 @@
 # src/aurora/routers/auth_router.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
-from typing import Dict, Any
+from typing import Dict
 
 from aurora.auth.security import (
     authenticate_user,
     create_access_token,
     get_current_user,
-    Token,
-    UserCredentials,
 )
+# IMPORTAÇÃO CORRIGIDA: Importa a classe TwoFactorAuth e as schemas Pydantic
 from aurora.auth.two_factor import (
-    setup_2fa,
-    enable_2fa,
-    disable_2fa,
-    verify_2fa,
+    TwoFactorAuth,
     TwoFactorSetup,
     TwoFactorVerify,
 )
+from aurora.schemas.token_schemas import Token
 from aurora.config import settings
 
 router = APIRouter()
+
+# Instanciar a classe TwoFactorAuth globalmente ou via Depends, dependendo do escopo desejado.
+# Para simplicidade neste exemplo, vamos instanciar globalmente.
+# Em um ambiente de produção, considere usar um padrão de injeção de dependência mais robusto
+# para gerenciar a instância de TwoFactorAuth, especialmente se ela precisar interagir com um DB real.
+two_factor_service = TwoFactorAuth()
 
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Endpoint para obter um token de acesso.
-
-    Args:
-        form_data: Formulário com username e password
-
-    Returns:
-        Token: Token de acesso
-
-    Raises:
-        HTTPException: Se as credenciais forem inválidas
     """
     user = await authenticate_user(form_data.username, form_data.password)
 
-    # Cria o token de acesso
+    # Se 2FA estiver habilitado, não emita o token direto, exija o segundo fator
+    if two_factor_service.user_2fa_enabled_status.get(user["username"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Autenticação de dois fatores necessária. Use o endpoint /token/2fa.",
+        )
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user["username"], "scopes": user["scopes"]},
@@ -58,28 +58,16 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @router.post("/token/2fa", response_model=Token)
 async def login_with_2fa(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    two_factor: TwoFactorVerify = Depends(),
+    two_factor_data: TwoFactorVerify = Depends(), # Nome alterado para evitar conflito com a instância do serviço
 ):
     """
     Endpoint para login com autenticação de dois fatores.
-
-    Args:
-        form_data: Formulário com username e password
-        two_factor: Código 2FA
-
-    Returns:
-        Token: Token de acesso
-
-    Raises:
-        HTTPException: Se as credenciais ou o código 2FA forem inválidos
     """
-    # Autentica o usuário
     user = await authenticate_user(form_data.username, form_data.password)
+    
+    # CHAMA O MÉTODO DA INSTÂNCIA DO SERVIÇO
+    await two_factor_service.verify_2fa_login(user["username"], two_factor_data.code)
 
-    # Verifica o código 2FA
-    await verify_2fa(user["username"], two_factor.code)
-
-    # Cria o token de acesso
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user["username"], "scopes": user["scopes"]},
@@ -97,36 +85,25 @@ async def login_with_2fa(
 async def setup_two_factor(current_user: Dict = Depends(get_current_user)):
     """
     Configura a autenticação de dois fatores.
-
-    Args:
-        current_user: Usuário atual autenticado
-
-    Returns:
-        TwoFactorSetup: Dados para configuração de 2FA
     """
-    return await setup_2fa(current_user)
+    # CHAMA O MÉTODO DA INSTÂNCIA DO SERVIÇO
+    return await two_factor_service.setup_2fa_for_user(current_user)
 
 
 @router.post("/2fa/enable")
 async def enable_two_factor(
-    two_factor: TwoFactorVerify, current_user: Dict = Depends(get_current_user)
+    two_factor_data: TwoFactorVerify, current_user: Dict = Depends(get_current_user) # Nome alterado
 ):
     """
     Ativa a autenticação de dois fatores.
-
-    Args:
-        two_factor: Código 2FA para verificação
-        current_user: Usuário atual autenticado
-
-    Returns:
-        Dict: Mensagem de sucesso
     """
-    result = await enable_2fa(current_user, two_factor.code)
+    # CHAMA O MÉTODO DA INSTÂNCIA DO SERVIÇO
+    result = await two_factor_service.enable_2fa_for_user(current_user, two_factor_data.code)
 
     if result:
         return {"message": "Autenticação de dois fatores ativada com sucesso"}
 
-    raise HTTPException(
+    raise HTTPException( # Isso provavelmente nunca será atingido se enable_2fa_for_user levantar HTTPExceptions
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Não foi possível ativar a autenticação de dois fatores",
     )
@@ -136,19 +113,14 @@ async def enable_two_factor(
 async def disable_two_factor(current_user: Dict = Depends(get_current_user)):
     """
     Desativa a autenticação de dois fatores.
-
-    Args:
-        current_user: Usuário atual autenticado
-
-    Returns:
-        Dict: Mensagem de sucesso
     """
-    result = await disable_2fa(current_user)
+    # CHAMA O MÉTODO DA INSTÂNCIA DO SERVIÇO
+    result = await two_factor_service.disable_2fa_for_user(current_user)
 
     if result:
         return {"message": "Autenticação de dois fatores desativada com sucesso"}
 
-    raise HTTPException(
+    raise HTTPException( # Isso provavelmente nunca será atingido
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Não foi possível desativar a autenticação de dois fatores",
     )
@@ -158,11 +130,5 @@ async def disable_two_factor(current_user: Dict = Depends(get_current_user)):
 async def read_users_me(current_user: Dict = Depends(get_current_user)):
     """
     Retorna os dados do usuário atual.
-
-    Args:
-        current_user: Usuário atual autenticado
-
-    Returns:
-        Dict: Dados do usuário
     """
     return current_user

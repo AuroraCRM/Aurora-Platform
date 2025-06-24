@@ -6,7 +6,7 @@ import logging
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from aurora.database_config import get_db_session
+from aurora.database import get_db
 from aurora.repositories.cliente_repository import ClienteRepository
 from aurora.integrations.cnpj_provider import CNPJaProvider
 from aurora.cache.redis_cache import RedisCache
@@ -14,10 +14,11 @@ from aurora.schemas.cliente_schemas import ClienteCreate
 
 logger = logging.getLogger(__name__)
 
+
 class ServicoCRM:
     def __init__(
         self,
-        db: Session = Depends(get_db_session),
+        db: Session = Depends(get_db),
         cnpj_provider: CNPJaProvider = Depends(),
         cache: RedisCache = Depends(),
     ):
@@ -41,14 +42,18 @@ class ServicoCRM:
             logger.info(f"Dados do CNPJ {cnpj_limpo} encontrados no cache.")
             dados_brutos, fonte = cached_data
         else:
-            logger.info(f"Dados do CNPJ {cnpj_limpo} não encontrados no cache. Buscando na API externa.")
+            logger.info(
+                f"Dados do CNPJ {cnpj_limpo} não encontrados no cache. Buscando na API externa."
+            )
             try:
                 dados_brutos, fonte = await self.cnpj_provider.get_cnpj_data(cnpj_limpo)
                 await self.cache.set(cache_key, (dados_brutos, fonte), expire=86400)
             except HTTPException as e:
                 raise e
             except Exception as exc:
-                logger.error("Erro inesperado ao consultar CNPJ %s: %s", cnpj_limpo, str(exc))
+                logger.error(
+                    "Erro inesperado ao consultar CNPJ %s: %s", cnpj_limpo, str(exc)
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Erro interno ao processar a solicitação de CNPJ.",
@@ -59,20 +64,28 @@ class ServicoCRM:
             cliente_schema = ClienteCreate(**dados_normalizados)
             return self.cliente_repo.create(cliente_schema)
         except Exception as exc:
-            logger.error("Erro ao normalizar ou criar cliente para o CNPJ %s: %s", cnpj_limpo, str(exc))
+            logger.error(
+                "Erro ao normalizar ou criar cliente para o CNPJ %s: %s",
+                cnpj_limpo,
+                str(exc),
+            )
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
-                detail=f"Erro ao processar os dados recebidos do CNPJ: {exc}"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Erro ao processar os dados recebidos do CNPJ: {exc}",
             )
 
     def _normalizar_dados_cnpj(self, dados_brutos: dict, fonte: str) -> dict:
-        if fonte == 'gratuita':
+        if fonte == "gratuita":
             est = dados_brutos.get("estabelecimento", {})
             dados_normalizados = {
                 "razao_social": dados_brutos.get("razao_social"),
                 "nome_fantasia": est.get("nome_fantasia"),
                 "cnpj": est.get("cnpj"),
-                "telefone": f"({est.get('ddd1')}) {est.get('telefone1')}" if est.get('ddd1') and est.get('telefone1') else None,
+                "telefone": (
+                    f"({est.get('ddd1')}) {est.get('telefone1')}"
+                    if est.get("ddd1") and est.get("telefone1")
+                    else None
+                ),
                 "email": est.get("email"),
                 "logradouro": est.get("logradouro"),
                 "numero": est.get("numero"),

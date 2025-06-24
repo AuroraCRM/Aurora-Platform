@@ -1,42 +1,47 @@
 # src/aurora/core/context_engine.py
-from typing import Dict, Any, Optional # CORREÇÃO CRÍTICA A SER APLICADA
+
 import yaml
-from aurora.config import settings
 
 class ContextEngine:
     """
-    Motor de contexto responsável por carregar e fornecer conhecimento
-    de domínio para outros módulos da aplicação.
+    Motor responsável por carregar e fornecer o contexto relevante 
+    para a execução de tarefas de IA.
     """
-    def __init__(self):
-        self.knowledge_file = settings.get("KNOWLEDGE_FILE_PATH", "knowledge.yaml")
-        self.knowledge: Dict[str, Any] = self._load_knowledge()
+    def __init__(self, knowledge_file='knowledge.yaml'):
+        self.knowledge_file = knowledge_file
+        self.knowledge_base = self._load_knowledge()
 
-    def _load_knowledge(self) -> Dict[str, Any]:
-        """
-        Carrega o arquivo de conhecimento (YAML) do disco.
-        Retorna um dicionário vazio se o arquivo não for encontrado ou ocorrer um erro.
-        """
+    def _load_knowledge(self):
+        """Carrega a base de conhecimento de um arquivo YAML."""
         try:
             with open(self.knowledge_file, 'r', encoding='utf-8') as f:
-                data = yaml.safe_load(f)
-                return data if isinstance(data, dict) else {}
+                return yaml.safe_load(f)
         except FileNotFoundError:
             print(f"AVISO: Arquivo de conhecimento '{self.knowledge_file}' não encontrado.")
             return {}
-        except yaml.YAMLError as e:
-            print(f"ERRO: Falha ao parsear o arquivo de conhecimento YAML: {e}")
+        except Exception as e:
+            print(f"ERRO: Falha ao carregar a base de conhecimento: {e}")
             return {}
 
-    def get_context(self, domain: str, key: str) -> Optional[Any]:
+    def __call__(self, task_description: str) -> dict:
         """
-        Obtém uma informação de contexto específica de um domínio.
-
+        Torna a instância da classe 'callable'. Este método substitui 
+        o 'get_context_for_task' e é a forma idiomática de executar
+        a ação principal do objeto.
+        
         Args:
-            domain (str): O domínio do conhecimento (ex: 'crm', 'pln').
-            key (str): A chave da informação desejada.
+            task_description: A descrição da tarefa fornecida.
 
         Returns:
-            Optional[Any]: O valor da informação ou None se não for encontrado.
+            Um dicionário contendo o contexto para a tarefa.
         """
-        return self.knowledge.get(domain, {}).get(key)
+        # Lógica para determinar o contexto com base na descrição da tarefa.
+        # Por enquanto, retorna um contexto genérico.
+        # No futuro, pode analisar a task_description para buscar no self.knowledge_base.
+        
+        context = {
+            "task": task_description,
+            "system_prompt": "Você é um assistente de IA prestativo.",
+            "knowledge_context": self.knowledge_base.get("general_info", "Nenhum contexto adicional disponível.")
+        }
+        return context

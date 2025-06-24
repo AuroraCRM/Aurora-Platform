@@ -3,7 +3,7 @@
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 from aurora.database_config import engine, Base
-from aurora.models.cliente_model import ClienteDB
+from aurora.models.cliente_model import Cliente
 from aurora.models.lead_models import LeadDB
 
 logger = logging.getLogger(__name__)
