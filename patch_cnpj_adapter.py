@@ -8,7 +8,7 @@ CORRECT_CONTENT = """\
 # src/integrations/cnpj_adapter.py
 from typing import Any, Dict, Optional
 import httpx
-from aurora.config import settings
+from aurora_platform.config import settings
 
 # Obtém a URL base da API do provedor de CNPJ a partir das configurações
 CNPJA_BASE_URL = settings.get("CNPJA_API_URL", "https://api.cnpja.com.br/v1")
@@ -57,18 +57,19 @@ class CNPJaAdapter:
             return {} # Retorna um dicionário vazio em caso de erro de rede
 """
 
+
 def apply_patch():
     """Verifica e aplica o patch no arquivo alvo."""
-    print("="*60)
+    print("=" * 60)
     print(f"PATCH AUTOMATIZADO PARA: {TARGET_FILE_PATH}")
-    print("="*60)
+    print("=" * 60)
 
     if not os.path.exists(TARGET_FILE_PATH):
         print(f"❌ ERRO: O arquivo alvo não foi encontrado em '{TARGET_FILE_PATH}'.")
         return
 
     try:
-        with open(TARGET_FILE_PATH, 'r', encoding='utf-8') as f:
+        with open(TARGET_FILE_PATH, "r", encoding="utf-8") as f:
             current_content = f.read()
 
         if current_content == CORRECT_CONTENT:
@@ -76,12 +77,13 @@ def apply_patch():
         else:
             print("🟡 ALERTA: O conteúdo do arquivo está desatualizado.")
             print("    -> Aplicando patch agora...")
-            with open(TARGET_FILE_PATH, 'w', encoding='utf-8') as f:
+            with open(TARGET_FILE_PATH, "w", encoding="utf-8") as f:
                 f.write(CORRECT_CONTENT)
             print("✅ Patch aplicado com sucesso!")
-            
+
     except Exception as e:
         print(f"❌ ERRO INESPERADO: Falha ao ler ou escrever no arquivo. {e}")
+
 
 if __name__ == "__main__":
     apply_patch()

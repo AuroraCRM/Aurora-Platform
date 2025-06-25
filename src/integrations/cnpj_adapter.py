@@ -1,7 +1,7 @@
 # src/integrations/cnpj_adapter.py
 from typing import Any, Dict, Optional
 import httpx
-from aurora.config import settings
+from aurora_platform.config import settings
 
 # Obtém a URL base da API do provedor de CNPJ a partir das configurações
 CNPJA_BASE_URL = settings.get("CNPJA_API_URL", "https://api.cnpja.com.br/v1")
@@ -38,13 +38,13 @@ class CNPJaAdapter:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()  # Lança exceção para respostas 4xx ou 5xx
                 data = response.json()
-                
+
                 # CORREÇÃO CRÍTICA A SER APLICADA
                 return data if isinstance(data, dict) else {}
 
         except httpx.HTTPStatusError as e:
             print(f"Erro ao buscar CNPJ {cnpj}: {e.response.status_code}")
-            return {} # Retorna um dicionário vazio em caso de erro de status
+            return {}  # Retorna um dicionário vazio em caso de erro de status
         except httpx.RequestError as e:
             print(f"Erro de requisição ao buscar CNPJ {cnpj}: {e}")
-            return {} # Retorna um dicionário vazio em caso de erro de rede
+            return {}  # Retorna um dicionário vazio em caso de erro de rede

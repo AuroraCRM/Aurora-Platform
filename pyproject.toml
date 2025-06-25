@@ -5,7 +5,7 @@ description = "Plataforma Aurora Core"
 authors = ["Equipe Aurora <dev@aurora.com>"]
 
 [[tool.poetry.packages]]
-include = "aurora"
+include = "aurora_platform"
 from = "src"
 
 [tool.poetry.dependencies]
@@ -20,6 +20,14 @@ psycopg2-binary = "^2.9.9"
 python-dotenv = "^1.0.1"
 redis = "^5.0.4"
 pyyaml = "^6.0.1"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"} # Para JWT
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}     # Para hashing de senha
+sqlmodel = "^0.0.19"                                   # Para SQLModel
+pyotp = "^2.9.0"                                       # Para 2FA
+qrcode = {extras = ["pil"], version = "^7.4.2"}        # Para QR Code em 2FA
+gunicorn = "^23.0.0"
+python-multipart = "^0.0.20"
+pydantic-settings = "^2.10.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
@@ -28,9 +36,10 @@ pytest-cov = "^5.0.0"
 flake8 = "^7.0.0"
 bandit = "^1.8.5"
 mypy = "^1.16.1"
+pytest-asyncio = "^1.0.0"
 
 [tool.poetry.scripts]
-aurora = "aurora.cli:app"
+aurora = "aurora_platform.cli:app"
 
 [build-system]
 requires = ["poetry-core"]
