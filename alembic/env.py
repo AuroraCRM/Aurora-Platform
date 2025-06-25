@@ -7,24 +7,26 @@ from logging.config import fileConfig
 
 # Carrega as variáveis do .env para o ambiente ANTES de qualquer outra coisa
 # Isso garante que o Alembic encontre a DATABASE_URL
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict # Adicionado SettingsConfigDict
 
 
 class AlembicSettings(BaseSettings):
     DATABASE_URL: str
-
-    class Config:
-        env_file = ".env"
-
+    # Configuração para Pydantic V2
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8", # Adicionado conforme instrução
+        extra='ignore' # Adicionado conforme instrução
+    )
 
 try:
-    if os.path.exists(".env"):
-        settings_alembic = AlembicSettings(_env_file=".env")
-    elif os.path.exists("../.env"):
-        settings_alembic = AlembicSettings(_env_file="../.env")
-    else:
-        settings_alembic = AlembicSettings()
-    DATABASE_URL_FROM_ENV = settings_alembic.DATABASE_URL
+    # Lógica de tentativa de carregamento de .env (pode ser simplificada se SettingsConfigDict lida bem com paths)
+    # Pydantic-settings v2 procura .env no CWD por padrão se env_file não for absoluto.
+    # Para robustez, pode-se verificar os caminhos como antes ou confiar na detecção automática.
+    # No entanto, o exemplo da tarefa instancia settings = AlembicSettings() diretamente.
+    # Vou seguir o exemplo da tarefa, que é mais limpo se o .env estiver no lugar esperado (raiz do projeto).
+    settings_obj = AlembicSettings()
+    DATABASE_URL_FROM_ENV = settings_obj.DATABASE_URL
 except Exception as e:
     print(
         f"Aviso: Não foi possível carregar DATABASE_URL via pydantic-settings: {e}"
@@ -32,9 +34,34 @@ except Exception as e:
     DATABASE_URL_FROM_ENV = None
 # --- Fim do Bloco de Carregamento de Configuração ---
 
-from alembic import context  # Movido para cá
-from sqlalchemy import create_engine  # Movido para cá
-from sqlmodel import SQLModel  # Movido para cá
+# Importações principais do Alembic e SQLAlchemy/SQLModel
+from alembic import context
+from sqlalchemy import create_engine
+from sqlmodel import SQLModel
+
+# --- INÍCIO DA LÓGICA DE CORREÇÃO DA URL (conforme instrução da tarefa) ---
+# Esta seção deve vir ANTES de config = context.config e do uso de DATABASE_URL_FROM_ENV
+# para setar a opção principal do Alembic.
+
+db_url_corrigida = None
+if DATABASE_URL_FROM_ENV:
+    db_url_corrigida = DATABASE_URL_FROM_ENV
+    # Garante que a codificação do cliente seja utf8 para evitar UnicodeDecodeError
+    if "client_encoding" not in db_url_corrigida:
+        # Adiciona o parâmetro usando '?' se não houver outros, ou '&' se já houver.
+        separator = "?" if "?" not in db_url_corrigida else "&"
+        db_url_corrigida += f"{separator}client_encoding=utf8"
+elif context.config.get_main_option("sqlalchemy.url"):
+    # Fallback para a URL do alembic.ini se DATABASE_URL_FROM_ENV não foi carregada
+    # Isso é importante se %(DATABASE_URL)s estiver no alembic.ini e for preenchida por env var
+    # que pydantic-settings não pegou por algum motivo.
+    db_url_ini = context.config.get_main_option("sqlalchemy.url")
+    db_url_corrigida = db_url_ini
+    if "client_encoding" not in db_url_corrigida:
+        separator = "?" if "?" not in db_url_corrigida else "&"
+        db_url_corrigida += f"{separator}client_encoding=utf8"
+# --- FIM DA LÓGICA DE CORREÇÃO DA URL ---
+
 
 # Ajusta o path para permitir importações do seu pacote
 sys.path.insert(
@@ -49,8 +76,11 @@ from aurora_platform.models.ai_log_model import AIInteractionLog  # noqa: F401
 
 config = context.config
 
-if DATABASE_URL_FROM_ENV:
-    config.set_main_option("sqlalchemy.url", DATABASE_URL_FROM_ENV)
+# Substitui a URL do alembic.ini pela URL corrigida (se disponível)
+if db_url_corrigida:
+    config.set_main_option("sqlalchemy.url", db_url_corrigida)
+# Se db_url_corrigida for None (nem env nem ini tinham uma URL base),
+# Alembic falhará mais tarde ao tentar obter sqlalchemy.url, o que é esperado.
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
