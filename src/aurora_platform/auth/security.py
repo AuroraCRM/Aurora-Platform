@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session  # Alterado de sqlalchemy.orm para sqlmodel
 
 from aurora_platform.config import settings
-from aurora_platform.database import get_db  # get_db agora retorna sqlmodel.Session
+from aurora_platform.database import get_session as get_db
 from aurora_platform.repositories.usuario_repository import (
     UsuarioRepository,
 )  # Novo repositório
