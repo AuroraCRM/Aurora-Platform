@@ -1,22 +1,44 @@
-# Caminho: C:\Users\winha\Aurora\Aurora-Platform\src\aurora_platform\schemas\cliente_schemas.py
+from pydantic import BaseModel, EmailStr, ConfigDict
+from typing import Optional # Removido List
+from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 
-
-class ClienteCreate(BaseModel):
-    nome: str
-    email: EmailStr
+class ClienteBase(BaseModel):
+    razao_social: str
+    nome_fantasia: Optional[str] = None
+    cnpj: str
+    inscricao_estadual: Optional[str] = None
     telefone: Optional[str] = None
-    cnpj: Optional[str] = None
+    email: Optional[EmailStr] = None
+    email_secundario: Optional[str] = None
+    site: Optional[str] = None
+    segmento: Optional[str] = None
+    observacoes: Optional[str] = None
 
 
-class ClienteResponse(BaseModel):
+class ClienteCreate(ClienteBase):
+    pass
+
+
+class ClienteUpdate(BaseModel):
+    razao_social: Optional[str] = None
+    nome_fantasia: Optional[str] = None
+    inscricao_estadual: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[EmailStr] = None
+    email_secundario: Optional[str] = None
+    site: Optional[str] = None
+    segmento: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class ClienteRead(ClienteBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
-    nome: str
-    email: EmailStr
-    telefone: Optional[str] = None
-    cnpj: Optional[str] = None
+    data_criacao: datetime
+    data_atualizacao: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+
+# Alias para compatibilidade com código existente
+Cliente = ClienteRead

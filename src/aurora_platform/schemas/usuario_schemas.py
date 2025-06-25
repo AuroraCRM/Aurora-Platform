@@ -21,8 +21,11 @@ class UsuarioInDBBase(UsuarioBase):
     hashed_password: str
 
 
+from pydantic import ConfigDict # Adicionar import
+
 # Propriedades para retornar ao cliente (não inclui hashed_password)
 class UsuarioRead(UsuarioBase):
+    model_config = ConfigDict(from_attributes=True) # Adicionado
     id: int
 
 

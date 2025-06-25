@@ -76,8 +76,10 @@ class Lead(SQLModel):
 class LeadCreate(Lead):
     pass
 
+from pydantic import ConfigDict # Adicionar import para ConfigDict
 
 class LeadRead(Lead):
+    model_config = ConfigDict(from_attributes=True) # Adicionado
     id: int
     data_criacao: datetime
     data_atualizacao: datetime
