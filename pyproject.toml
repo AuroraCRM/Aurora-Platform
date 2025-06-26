@@ -6,6 +6,10 @@ version = "0.1.0"
 [tool.poetry.dependencies]
 python = "^3.10"
 # ... suas dependências ...
+dynaconf = "^3.2.11"
+sqlmodel = "^0.0.24"
+python-jose = {extras = ["cryptography"], version = "^3.5.0"}
+passlib = "^1.7.4"
 
 [tool.poetry.dev-dependencies]
 alembic = "^1.13.1"
@@ -14,3 +18,6 @@ alembic = "^1.13.1"
 [tool.poetry.build]
 generate-setup-file = false
 script = "build.py"
+[tool.poetry.group.dev.dependencies]
+fastapi = {extras = ["all"], version = "^0.115.13"}
+pytest = "^8.4.1"

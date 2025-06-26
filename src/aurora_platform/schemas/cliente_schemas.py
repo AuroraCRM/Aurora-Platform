@@ -20,3 +20,10 @@ class ClienteResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ClienteUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[EmailStr] = None
+    telefone: Optional[str] = None
+    cnpj: Optional[str] = None

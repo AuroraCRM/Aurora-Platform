@@ -3,7 +3,7 @@
 from aurora_platform.models.cliente_model import Cliente
 from aurora_platform.schemas.cliente_schemas import ClienteCreate
 from aurora_platform.repositories.cliente_repository import ClienteRepository
-from aurora_platform.schemas.cnpj_schema import CNPJResponseSchema
+from aurora_platform.schemas.cnpj_schema import CNPJResponse # Changed from CNPJResponseSchema
 from aurora_platform.services.cnpj_service import CNPJService  # Corrigido o nome da classe
 from typing import List, Optional
 from sqlalchemy.orm import Session
@@ -24,6 +24,13 @@ class ServicoCRM:
     def buscar_cliente_por_id(self, cliente_id: int) -> Optional[Cliente]:
         return self.repo.buscar_por_id(cliente_id)
 
-    def buscar_dados_cnpj(self, cnpj: str) -> CNPJResponseSchema:
+    def buscar_dados_cnpj(self, cnpj: str) -> CNPJResponse: # Changed type hint
         dados = self.cnpj_service.buscar_dados_cnpj(cnpj)
-        return CNPJResponseSchema(**dados)
+        # Assuming cnpj_service.buscar_dados_cnpj already returns a CNPJResponse object
+        # or a dict that can be validated into one.
+        # If dados is already a CNPJResponse instance, just return it.
+        # If it's a dict, CNPJResponse(**dados) is correct.
+        # For now, let's assume it needs to be instantiated if not already.
+        if isinstance(dados, dict):
+            return CNPJResponse(**dados)
+        return dados # If it's already a CNPJResponse instance

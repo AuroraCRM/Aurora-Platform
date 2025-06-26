@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
-class CNPJResponseSchema(BaseModel):
+class CNPJResponse(BaseModel): # Renamed from CNPJResponseSchema
     cnpj: str = Field(..., description="CNPJ da empresa")
     razao_social: Optional[str] = Field(None, description="Razão social da empresa")
     nome_fantasia: Optional[str] = Field(None, description="Nome fantasia da empresa")
