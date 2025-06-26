@@ -10,6 +10,7 @@ from aurora_platform.routers import (
     cnpj_routes,
     lead_router,
 )
+from aurora_platform.api.v1 import status as status_router # Adicionado para o novo endpoint de status
 from contextlib import asynccontextmanager  # Mover import para o topo
 # Removida a re-importação de FastAPI
 
@@ -60,6 +61,7 @@ app.add_middleware(
 
 # A arquitetura é mantida limpa e modular incluindo os roteadores de cada domínio.
 # Cada roteador gerencia um conjunto específico de endpoints.
+app.include_router(status_router.router, prefix="/api/v1", tags=["Status"]) # Adicionado o router de status
 app.include_router(auth_router.router, prefix="/auth", tags=["Autenticação"])
 app.include_router(cliente_router.router, prefix="/clientes", tags=["Clientes CRM"])
 app.include_router(lead_router.router, prefix="/leads", tags=["Leads CRM"])
