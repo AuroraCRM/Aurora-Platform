@@ -6,6 +6,10 @@ version = "0.1.0"
 [tool.poetry.dependencies]
 python = "^3.10"
 # ... suas dependências ...
+transformers = "^4.40.0"
+torch = "^2.2.0" # Specify version, consider CPU-only if appropriate for some environments: torch --index-url https://download.pytorch.org/whl/cpu
+accelerate = "^0.29.0"
+sentencepiece = "^0.2.0" # Often needed for tokenizers
 
 [tool.poetry.dev-dependencies]
 alembic = "^1.13.1"
