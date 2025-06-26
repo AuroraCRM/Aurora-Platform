@@ -80,7 +80,7 @@ def get_current_user(
             raise credentials_exception
 
         token_type: Optional[str] = payload.get("type")
-        if token_type != "access":
+        if token_type != "access":  # nosec
             # Idealmente, logar tentativa de uso de token inválido
             raise credentials_exception
 

@@ -3,9 +3,6 @@
 
 import sys
 import os
-import pytest
-from fastapi.testclient import TestClient
-from aurora_platform.main import app # Mover importação de app para cá
 
 # --- CORREÇÃO CRUCIAL ---
 # Adiciona o diretório 'src' ao início do path de busca do Python.
@@ -14,6 +11,10 @@ from aurora_platform.main import app # Mover importação de app para cá
 # Esta linha resolve os erros 'ModuleNotFoundError' e 'AttributeError'
 # durante a coleta de testes.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
+
+import pytest
+from fastapi.testclient import TestClient
+from aurora_platform.main import app # Mover importação de app para cá
 
 # Define variáveis mínimas de ambiente para inicializar a aplicação
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")

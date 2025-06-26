@@ -1,0 +1,1 @@
+import sqlmodel; print('SQLModel importado com sucesso. Versão:', sqlmodel.__version__)
