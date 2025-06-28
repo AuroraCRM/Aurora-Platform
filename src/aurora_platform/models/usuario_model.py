@@ -23,6 +23,8 @@ class Usuario(SQLModel, table=True):
     # Relacionamento: Um usuário pode pertencer a um cliente
     cliente: Optional["Cliente"] = Relationship(back_populates="usuarios")
 
+    hashed_refresh_token: Optional[str] = Field(default=None, sa_column=Column(SQLString))
+
     # Adicionar outros campos relevantes para o usuário, se necessário, como:
     # is_superuser: bool = Field(default=False, nullable=False)
     # data_criacao: Optional[datetime] = Field(...)

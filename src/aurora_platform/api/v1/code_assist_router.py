@@ -52,34 +52,25 @@ class CodeSuggestionResponse(BaseModel):
 
 
 @router.post("/suggest", response_model=CodeSuggestionResponse)
+phi3_handler_instance = Phi3Handler()
+
+@router.post("/suggest", response_model=CodeSuggestionResponse)
 async def get_code_suggestion(
-    request_data: CodeSuggestionRequest,  # Usa o schema para validar o corpo do request
-    code_assist_service: CodeAssistService = Depends(
-        CodeAssistService
-    ),  # Injeta o serviço
+    request_data: CodeSuggestionRequest,
 ):
     """
-    Gera uma sugestão de código com base no contexto fornecido.
+    Gera uma sugestão de código com base no contexto fornecido usando o modelo Phi-3.
     """
     try:
-        # O método do serviço espera um dicionário de contexto.
-        # request_data.model_dump() converte o schema Pydantic para um dict.
-        suggestion_result = await code_assist_service.generate_code_suggestion(
-            request_data.model_dump()
-        )
+        prompt = f"Language: {request_data.language}\nCode: {request_data.code_snippet}\nIntent: {request_data.user_intent}\n\nProvide a code suggestion:"
+        
+        suggestion = phi3_handler_instance.generate_response(prompt)
 
-        # Mapear o resultado do serviço para o schema de resposta da API, se necessário.
-        # Se CodeSuggestionResponse for idêntico ou um subconjunto do dict retornado,
-        # a conversão direta funciona.
-        return CodeSuggestionResponse(**suggestion_result)
+        return CodeSuggestionResponse(suggestion=suggestion, model_used=phi3_handler_instance.model_name)
 
     except Exception as e:
-        # Em um cenário real, tratar exceções específicas do serviço de IA
-        # e retornar códigos de erro HTTP apropriados.
-        # Ex: se o modelo de IA não suportar a linguagem, retornar 4xx.
-        # Se houver um erro interno no serviço de IA, retornar 5xx.
         raise HTTPException(
-            status_code=500, detail=f"Erro ao gerar sugestão de código: {str(e)}"
+            status_code=500, detail=f"Error generating code suggestion with Phi-3: {str(e)}"
         )
 
 

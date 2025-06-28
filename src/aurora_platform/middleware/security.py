@@ -65,8 +65,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             # Política CSP ajustada para carregar os recursos de /docs corretamente
             csp_policy = (
                 "default-src 'self'; "
-                "script-src 'self' cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; "
-                "style-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
+                "script-src 'self' cdn.jsdelivr.net; "
+                "style-src 'self' cdn.jsdelivr.net; "
                 "img-src 'self' data:; "
                 "font-src 'self'; "
                 "frame-ancestors 'none'; "

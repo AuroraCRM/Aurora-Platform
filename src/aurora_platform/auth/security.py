@@ -51,53 +51,108 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
-        expire = time.time() + expires_delta.total_seconds()
+        expire = datetime.utcnow() + expires_delta
     else:
-        expire_minutes = get_access_token_expire_minutes()  # Usar a função
-        expire = time.time() + (expire_minutes * 60)
+        expire_minutes = get_access_token_expire_minutes()
+        expire = datetime.utcnow() + timedelta(minutes=expire_minutes)
 
-    to_encode.update({"exp": expire})
-    # Garantir que 'type' está no payload, como esperado por get_current_user
-    if "type" not in to_encode:
-        to_encode["type"] = "access"  # Default para access token
-
+    to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        # Refresh tokens duram mais, por exemplo, 7 dias
+        expire = datetime.utcnow() + timedelta(days=settings.get("REFRESH_TOKEN_EXPIRE_DAYS", 7))
+
+    to_encode.update({"exp": expire, "type": "refresh"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def add_token_to_blacklist(token: str, expires_at: datetime):
+    # Calcula o tempo de expiração em segundos
+    now = datetime.utcnow()
+    expires_in_seconds = int((expires_at - now).total_seconds())
+    if expires_in_seconds > 0:
+        set_cache(f"{BLACKLIST_PREFIX}{token}", "revoked", expires_in_seconds)
+
+def is_token_blacklisted(token: str) -> bool:
+    return redis_client.exists(f"{BLACKLIST_PREFIX}{token}")
 
 
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> UsuarioModel:  # Retorna UsuarioModel
+) -> UsuarioModel:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if is_token_blacklisted(token):
+        raise credentials_exception
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: Optional[str] = payload.get("sub")  # username é o email do usuário
+        username: Optional[str] = payload.get("sub")
         if username is None:
             raise credentials_exception
 
         token_type: Optional[str] = payload.get("type")
-        if token_type != "access":  # nosec
-            # Idealmente, logar tentativa de uso de token inválido
+        if token_type != "access":
             raise credentials_exception
 
     except JWTError:
-        # Idealmente, logar erro de decodificação
         raise credentials_exception
 
-    # Usar UsuarioRepository para buscar o usuário
     user_repo = UsuarioRepository(db)
     user = user_repo.get_by_email(email=username)
 
     if user is None:
         raise credentials_exception
-    if not user.is_active:  # Adicionada verificação se usuário está ativo
+    if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
+    return user
+
+def verify_refresh_token(
+    refresh_token: str, db: Session = Depends(get_db)
+) -> UsuarioModel:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate refresh token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if is_token_blacklisted(refresh_token):
+        raise credentials_exception
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: Optional[str] = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+
+        token_type: Optional[str] = payload.get("type")
+        if token_type != "refresh":
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+    user_repo = UsuarioRepository(db)
+    user = user_repo.get_by_email(email=username)
+
+    if user is None:
+        raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+        )
+    # Verify if the refresh token matches the one stored in the database
+    if not user.hashed_refresh_token or not verify_password(refresh_token, user.hashed_refresh_token):
+        raise credentials_exception
+
     return user
 
 

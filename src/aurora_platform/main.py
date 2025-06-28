@@ -48,6 +48,8 @@ app.add_exception_handler(Exception, generic_exception_handler)
 # Configura o CORS (Cross-Origin Resource Sharing) para permitir que
 # o frontend (ou outras aplicações) acessem a API a partir de diferentes origens.
 # Em produção, a lista de 'origins' deve ser restrita aos domínios autorizados.
+from aurora_platform.middleware.security import SecurityHeadersMiddleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get(
@@ -57,6 +59,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Aqui poderiam ser adicionados outros middlewares, como o de tratamento de erros
 # ou de rate limiting, caso fossem implementados como tal.
