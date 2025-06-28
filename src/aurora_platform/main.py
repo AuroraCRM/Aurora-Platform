@@ -30,12 +30,18 @@ async def lifespan(
 
 # Cria a instância principal da aplicação FastAPI
 # O título e a versão são carregados dinamicamente a partir do nosso sistema de configuração
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
+from aurora_platform.middleware.error_handler import http_exception_handler, generic_exception_handler
+
 app = FastAPI(
     title=settings.get("PROJECT_NAME", "Aurora Platform"),
     version=settings.get("PROJECT_VERSION", "1.0.0"),
     description="API central para a plataforma Aurora, gerenciando CRM, integrações e serviços de IA.",
     lifespan=lifespan,  # Agora lifespan está definido
 )
+
+app.add_exception_handler(FastAPIHTTPException, http_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 # --- Configuração de Middleware ---
 
