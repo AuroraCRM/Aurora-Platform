@@ -105,6 +105,22 @@ class CodeAssistService:
         }
         return response
 
+    async def generate_completion(self, code: str) -> str:
+        """
+        Gera uma complicação de código para um determinado trecho.
+        Este método atua como um wrapper para a lógica de assistência de código mais específica.
+
+        Args:
+            code: O trecho de código a ser completado.
+
+        Returns:
+            A string com o código completado.
+        """
+        # Por enquanto, vamos usar a lógica de 'complete_code_snippet' como base.
+        # Assumimos a linguagem como python para este exemplo.
+        result = await self.complete_code_snippet(snippet=code, language="python")
+        return result.get("completed_snippet", f"{code} # Falha ao completar")
+
 
 # Exemplo de como o serviço poderia ser usado (não parte da classe):
 # async def main_example():

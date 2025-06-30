@@ -12,11 +12,11 @@ def refactor_imports(file_path: Path):
     pattern = r"(from\s+)(src\.)(\S+?\s+import\s+[\w\s,]+)"
 
     # Substitui 'src.' por 'aurora.'
-    new_content = re.sub(pattern, r"\1aurora.\3", content)
+    new_content = re.sub(pattern, r"\1aurora_platform.\3", content)
 
     # Padrão para imports completos
     pattern_full = r"(import\s+)(src\.)(\S+)"
-    new_content = re.sub(pattern_full, r"\1aurora.\3", new_content)
+    new_content = re.sub(pattern_full, r"\1aurora_platform.\3", new_content)
 
     if new_content != content:
         with open(file_path, "w", encoding="utf-8") as f:
@@ -29,7 +29,7 @@ def main():
     directories = ["src", "tests"]
 
     print("Iniciando refatoração de imports...")
-    print("Padrão: 'src' → 'aurora'")
+    print("Padrão: 'src' → 'aurora_platform'")
 
     for directory in directories:
         dir_path = project_root / directory

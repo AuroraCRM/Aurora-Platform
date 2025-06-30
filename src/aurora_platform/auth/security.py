@@ -1,5 +1,5 @@
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Dict, Optional # Removido Any
 
 from jose import JWTError, jwt

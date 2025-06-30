@@ -1,22 +1,21 @@
+import logging
 from typing import Optional
-from sqlmodel import Session, select, SQLModel, Field  # Adicionado Field
-from fastapi import (
-    HTTPException,
-)  # Para consistência com ClienteRepository, embora não usado ainda
+from sqlmodel import Session, select, SQLModel, Field
+from fastapi import HTTPException
 
 from aurora_platform.models.usuario_model import Usuario
 
+logger = logging.getLogger(__name__)
 
 # Schema interno para criação de usuário no repositório
 class UsuarioCreateRepo(SQLModel):
     email: str = Field(
         unique=True, index=True, nullable=False
-    )  # Adicionado para espelhar modelo
+    )
     hashed_password: str
     nome: Optional[str] = None
     cliente_id: Optional[int] = None
     is_active: bool = True
-    # Adicionar outros campos que vêm do processo de criação de usuário
 
 
 class UsuarioRepository:
@@ -25,27 +24,36 @@ class UsuarioRepository:
 
     def get_by_id(self, usuario_id: int) -> Optional[Usuario]:
         """Busca um usuário pelo ID."""
-        return self.db.get(Usuario, usuario_id)
+        logger.info(f"Attempting to retrieve user with ID: {usuario_id}")
+        user = self.db.get(Usuario, usuario_id)
+        if user:
+            logger.info(f"User with ID: {usuario_id} found.")
+        else:
+            logger.info(f"User with ID: {usuario_id} not found.")
+        return user
 
     def get_by_email(self, email: str) -> Optional[Usuario]:
         """Busca um usuário pelo email."""
+        logger.info(f"Attempting to retrieve user with email: {email}")
         if not email:
+            logger.warning("Attempted to retrieve user with empty email.")
             return None
         statement = select(Usuario).where(Usuario.email == email)
-        return self.db.exec(statement).first()
+        user = self.db.exec(statement).first()
+        if user:
+            logger.info(f"User with email: {email} found.")
+        else:
+            logger.info(f"User with email: {email} not found.")
+        return user
 
     def create(self, usuario_data: UsuarioCreateRepo) -> Usuario:
         """Cria um novo usuário no banco de dados."""
-        # Aqui, assumimos que usuario_data já contém a senha hasheada
-        # e todos os campos necessários conforme definido em UsuarioCreateRepo
-        # e compatíveis com o modelo Usuario.
-
-        # Validação para email único pode ser feita aqui antes de tentar inserir,
-        # ou tratar a IntegrityError do banco.
+        logger.info(f"Attempting to create new user with email: {usuario_data.email}")
         existing_user = self.get_by_email(usuario_data.email)
         if existing_user:
+            logger.warning(f"User creation failed: User with email '{usuario_data.email}' already exists.")
             raise HTTPException(
-                status_code=409,  # Conflict
+                status_code=409,
                 detail=f"Usuário com email '{usuario_data.email}' já existe.",
             )
 
@@ -54,19 +62,12 @@ class UsuarioRepository:
             self.db.add(db_usuario)
             self.db.commit()
             self.db.refresh(db_usuario)
+            logger.info(f"User created successfully: {db_usuario.email} (ID: {db_usuario.id})")
             return db_usuario
-        except (
-            Exception
-        ) as e:  # Idealmente capturar IntegrityError mais especificamente
+        except Exception as e:
             self.db.rollback()
-            # Logar o erro e talvez levantar uma exceção mais genérica ou específica
+            logger.error(f"Error creating user {usuario_data.email}: {e}", exc_info=True)
             raise HTTPException(
                 status_code=500,
                 detail=f"Erro ao criar usuário: {str(e)}",
             )
-
-    # Outros métodos como update, delete, list_all podem ser adicionados conforme necessidade.
-    # def update(self, usuario_id: int, usuario_data: UsuarioUpdateRepo) -> Optional[Usuario]:
-    #     ...
-    # def delete(self, usuario_id: int) -> bool:
-    #     ...

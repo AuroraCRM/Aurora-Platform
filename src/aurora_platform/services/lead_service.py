@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
 
-from aurora_platform.database import get_db
+from aurora_platform.database import get_session
 from aurora_platform.models.lead_models import (
     LeadDB,
     LeadCreate,
@@ -16,7 +16,7 @@ from aurora_platform.repositories.lead_repository import LeadRepository
 
 
 class LeadService:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: Session = Depends(get_session)):
         self.lead_repo = LeadRepository(db)
 
     def create_lead(self, lead_data: LeadCreate) -> LeadDB:

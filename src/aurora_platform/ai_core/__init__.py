@@ -10,7 +10,7 @@ from aurora_platform.ai_core.data_ingestion import (
     DataIngestionProcessor,
     InteractionEvent,
 )
-from aurora_platform.ai_core.knowledge_storage import KnowledgeStorage, KnowledgeEntry
+from aurora_platform.ai_core.knowledge_storage import VectorKnowledgeBase, KnowledgeEntry
 from aurora_platform.ai_core.feedback_loop import (
     FeedbackProcessor,
     FeedbackType,
@@ -20,7 +20,7 @@ from aurora_platform.ai_core.feedback_loop import (
 __all__ = [
     "DataIngestionProcessor",
     "InteractionEvent",
-    "KnowledgeStorage",
+    "VectorKnowledgeBase",
     "KnowledgeEntry",
     "FeedbackProcessor",
     "FeedbackType",

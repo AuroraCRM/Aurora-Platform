@@ -1,81 +1,45 @@
-# Dockerfile com segurança reforçada para Aurora-Platform
-# Usa multi-stage build para reduzir a superfície de ataque
+# Stage 1: Builder
+# Use a lightweight Python base image for building
+FROM python:3.12-slim AS builder
 
-# Estágio de build
-FROM python:3.11-slim AS builder
-
-# Evita mensagens de aviso durante a instalação
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-# Cria usuário não-root para segurança
-RUN groupadd -g 1000 appuser && \
-    useradd -u 1000 -g appuser -s /bin/bash -m appuser
-
-# Instala dependências de build
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc libc6-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Cria e ativa ambiente virtual
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copia apenas os arquivos necessários para instalar dependências
+# Set the working directory inside the container
 WORKDIR /app
-COPY requirements.txt .
 
-# Instala dependências
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Poetry, the dependency manager
+RUN pip install poetry
 
-# Estágio final
-FROM python:3.11-slim
+# Configure Poetry to create the virtual environment inside the project directory
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
-# Define variáveis de ambiente para segurança
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH="/app" \
-    ENVIRONMENT="production" \
-    DEBUG="False"
+# Copy only the dependency configuration files to leverage Docker cache
+COPY pyproject.toml poetry.lock ./
 
-# Cria usuário não-root para segurança
-RUN groupadd -g 1000 appuser && \
-    useradd -u 1000 -g appuser -s /bin/bash -m appuser
+# Install production dependencies only, without development dependencies or the project itself
+RUN poetry install --only main --no-root
 
-# Copia o ambiente virtual do estágio de build
-COPY --from=builder /opt/venv /opt/venv
+# Stage 2: Final
+# Start a new, clean image from the same lightweight Python base
+FROM python:3.12-slim AS final
 
-# Cria diretórios necessários com permissões corretas
-RUN mkdir -p /app/logs /app/certs && \
-    chown -R appuser:appuser /app
-
-# Copia o código da aplicação
+# Set the working directory inside the container
 WORKDIR /app
-COPY --chown=appuser:appuser . .
 
-# Configurações de segurança
-RUN chmod 600 .env* && \
-    chmod 700 certs && \
-    chmod 600 certs/* && \
-    chmod 755 run_api.py
+# Copy the installed virtual environment from the builder stage
+# This ensures all production dependencies are available
+COPY --from=builder /app/.venv /app/.venv
 
-# Verifica vulnerabilidades conhecidas
-RUN pip install safety && \
-    safety check
+# Add the virtual environment's bin directory to the PATH
+# This allows direct execution of installed packages like uvicorn
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Muda para o usuário não-root
-USER appuser
+# Copy the application source code into the final image
+# Only the 'src/aurora_platform' directory is needed for the application to run
+COPY src/aurora_platform ./aurora_platform
 
-# Expõe a porta da API
-EXPOSE 8000
+# Expose the port on which the FastAPI application will listen
+# Cloud Run typically expects applications to listen on port 8080
+EXPOSE 8080
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Comando para iniciar a aplicação
-CMD ["python", "run_api.py"]
+# Define the command to run the application using uvicorn
+# It listens on all interfaces (0.0.0.0) on port 8080
+CMD ["python", "-m", "uvicorn", "aurora_platform.main:app", "--host", "0.0.0.0", "--port", "8080"]

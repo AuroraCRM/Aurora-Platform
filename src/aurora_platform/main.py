@@ -79,9 +79,13 @@ app.include_router(
 
 # --- Inclusão dos Roteadores da API v1 (Módulos de IA) ---
 from aurora_platform.api.v1 import code_assist_router as code_assist_v1_router
+from aurora_platform.api.v1 import inference_router as inference_v1_router
 
 app.include_router(
     code_assist_v1_router.router, prefix="/api/v1", tags=["IA Services v1"]
+)
+app.include_router(
+    inference_v1_router.router, prefix="/api/v1", tags=["IA Services v1"]
 )
 
 

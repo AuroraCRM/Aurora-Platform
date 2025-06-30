@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 @router.post("/token", response_model=token_schemas.Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Session = Depends(get_session),
-    request: Request
+    request: Request,
+    session: Session = Depends(get_session)
 ):
     client_ip = request.client.host if request.client else "unknown"
     user = security.authenticate_user(
@@ -69,8 +69,8 @@ async def logout(
 @router.post("/refresh", response_model=token_schemas.Token)
 async def refresh_token(
     refresh_token: Annotated[str, Depends(security.oauth2_scheme)],
-    session: Session = Depends(get_session),
-    request: Request
+    request: Request,
+    session: Session = Depends(get_session)
 ):
     client_ip = request.client.host if request.client else "unknown"
     user = security.verify_refresh_token(refresh_token, session)

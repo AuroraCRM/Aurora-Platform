@@ -12,9 +12,9 @@
     "ignore": [
         "src/aurora/models/cliente_models.py"
     ],
-    "reportMissingImports": false,
+    "reportMissingImports": true,
     "reportMissingTypeStubs": false,
-    "pythonVersion": "3.13",
+    "pythonVersion": "3.12",
     "pythonPlatform": "Windows",
-    "typeCheckingMode": "off"
+    "typeCheckingMode": "basic"
 }

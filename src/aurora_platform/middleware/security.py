@@ -6,6 +6,8 @@ import logging
 import re
 from typing import List
 
+from aurora_platform.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,19 +17,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     Implementa as melhores práticas de segurança OWASP.
     """
 
-    def __init__(self, app, **options):
+    def __init__(self, app):
         super().__init__(app)
-        # Incluímos "testserver" para que o TestClient possa passar na validação de Host
-        self.allowed_hosts: List[str] = options.get(
-            "allowed_hosts",
+        # Carrega as configurações do Dynaconf, com valores padrão de segurança.
+        # "testserver" é incluído para que o TestClient do Pytest passe na validação de Host.
+        self.allowed_hosts: List[str] = settings.get(
+            "ALLOWED_HOSTS",
             ["localhost", "127.0.0.1", "testserver"],
         )
-        self.allowed_paths: List[str] = options.get(
-            "allowed_paths",
+        self.allowed_paths: List[str] = settings.get(
+            "ALLOWED_PATHS",
             ["/api", "/docs", "/redoc", "/openapi.json", "/favicon.ico"],
         )
-        self.max_content_length: int = options.get(
-            "max_content_length", 10 * 1024 * 1024
+        self.max_content_length: int = settings.get(
+            "MAX_CONTENT_LENGTH", 10 * 1024 * 1024
         )  # 10MB
 
     async def dispatch(self, request: Request, call_next):
@@ -78,7 +81,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 {
                     "X-Frame-Options": "DENY",
                     "X-Content-Type-Options": "nosniff",
-                    "X-XSS-Protection": "1; mode=block",
                     "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
                     "Content-Security-Policy": csp_policy,
                     "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",

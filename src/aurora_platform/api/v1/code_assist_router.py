@@ -1,85 +1,50 @@
-from fastapi import APIRouter, Depends, HTTPException # Removido Body
-from typing import Optional # Removido Dict, Any
-from pydantic import ( # Movido para o topo
-    BaseModel,
-    Field as PydanticField,
-)
+# src/aurora_platform/api/v1/code_assist_router.py
+from fastapi import APIRouter, Depends, HTTPException, status # <-- Adicionado 'status'
+from pydantic import BaseModel
+from typing import Optional # Adicionar import opcional
 
-from aurora_platform.services.code_assist_service import CodeAssistService
+# Importando o serviço que criamos anteriormente
+# Assumindo que este serviço será movido para aurora_platform.services
+# e que usará o Google Vertex AI
+from aurora_platform.services.code_assist_service import CodeAssistService 
 
-# Adicionar schemas Pydantic/SQLModel para entrada e saída se necessário
-# Ex: from aurora_platform.schemas.code_assist_schemas import CodeAssistRequest, CodeAssistResponse
-
-# Inicializar o router para a v1 da API de Code Assist
-# O prefixo /api/v1 será adicionado no main.py ao incluir este router
+# Cria um novo roteador que será incluído na API principal
 router = APIRouter(
-    prefix="/code-assist",  # Prefixo específico para este router
-    tags=["Code Assistance AI"],  # Tag para a documentação da API (Swagger UI)
+    prefix="/assist",
+    tags=["AI Assistance"],
 )
 
-# --- Injeção de Dependência do Serviço ---
-# O FastAPI pode injetar o serviço automaticamente se ele tiver dependências padrão (como settings)
-# ou se for uma classe simples. Para configurações mais complexas, pode-se usar Depends com uma função factory.
-# Aqui, vamos assumir que o CodeAssistService pode ser injetado diretamente ou com um Depends simples.
-# Se o CodeAssistService precisar de 'settings' do Dynaconf, isso pode ser gerenciado
-# na sua inicialização ou através de uma dependência que carrega as settings.
+class FimRequest(BaseModel):
+    """Defines the request model for a Fill-in-the-Middle request."""
+    code_with_fim: str
+    # Podemos adicionar outros parâmetros no futuro, como 'model_preference'
+    
+class FimResponse(BaseModel):
+    """Defines the response model for a completion."""
+    completed_code: str
 
-
-class CodeSuggestionRequest(BaseModel):
-    language: str = PydanticField(
-        ...,
-        json_schema_extra={"example": "python"},
-        description="Linguagem de programação do snippet.",
-    )
-    code_snippet: str = PydanticField(
-        "",
-        json_schema_extra={"example": "def hello():\n  "},
-        description="Trecho de código atual.",
-    )
-    user_intent: Optional[str] = PydanticField(
-        None,
-        json_schema_extra={"example": "print hello world"},
-        description="Intenção do usuário para o código.",
-    )
-    # Adicionar outros campos relevantes que o CodeAssistService.generate_code_suggestion espera no 'context'
-
-
-class CodeSuggestionResponse(BaseModel):
-    suggestion: str
-    confidence: Optional[float] = None
-    model_used: Optional[str] = None
-    # Adicionar outros campos da resposta do serviço
-
-
-@router.post("/suggest", response_model=CodeSuggestionResponse)
-phi3_handler_instance = Phi3Handler()
-
-@router.post("/suggest", response_model=CodeSuggestionResponse)
-async def get_code_suggestion(
-    request_data: CodeSuggestionRequest,
+# AQUI ESTAVA O ERRO DE INDENTAÇÃO OU SINTAXE.
+# Garanta que esta função esteja corretamente indentada e formatada.
+@router.post("/fim", response_model=FimResponse)
+async def get_fim_assistance(
+    request: FimRequest,
+    service: CodeAssistService = Depends(CodeAssistService)
 ):
     """
-    Gera uma sugestão de código com base no contexto fornecido usando o modelo Phi-3.
+    Receives code with FIM tokens and returns the AI-completed code.
+    This endpoint leverages the CodeAssistService to communicate with an
+    external AI model (like DeepSeek or Vertex AI).
     """
     try:
-        prompt = f"Language: {request_data.language}\nCode: {request_data.code_snippet}\nIntent: {request_data.user_intent}\n\nProvide a code suggestion:"
-        
-        suggestion = phi3_handler_instance.generate_response(prompt)
-
-        return CodeSuggestionResponse(suggestion=suggestion, model_used=phi3_handler_instance.model_name)
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error generating code suggestion with Phi-3: {str(e)}"
+        # Aqui chamaria o serviço para obter a complicação da IA
+        # Supondo que service.assist_with_fim exista e retorne uma string
+        completion = await service.generate_completion(
+            code=request.code_with_fim
         )
-
-
-# Adicionar mais endpoints conforme necessário para o CodeAssistService
-# Exemplo:
-# @router.post("/complete", ...)
-# async def complete_snippet(...): ...
-
-# Este router precisa ser incluído no FastAPI app principal (main.py)
-# Exemplo em main.py:
-# from aurora_platform.api.v1 import code_assist_router as code_assist_v1_router
-# app.include_router(code_assist_v1_router.router, prefix="/api/v1")
+        return FimResponse(completed_code=completion)
+    except HTTPException as e:
+        # Re-lança exceções HTTP que o serviço possa ter gerado
+        raise e
+    except Exception as e:
+        # Captura qualquer outro erro inesperado
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An internal error occurred: {e}")

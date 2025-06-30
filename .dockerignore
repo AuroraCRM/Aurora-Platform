@@ -1,0 +1,54 @@
+# Ignore Git and IDE specific files
+.git
+.github
+.vscode
+.idea
+.DS_Store
+
+# Ignore Python specific files and directories
+__pycache__
+*.pyc
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.flake8
+
+# Ignore documentation, temporary files, and reports
+*.md
+*.txt
+*.log
+*.env*
+temp_*
+registro ChatGpt Aurora.md
+Últimas interações.md
+mri_report.md
+bandit_report.json
+bandit_report_new.json
+
+# Ignore build artifacts, scripts, and configuration not needed at runtime
+build.py
+check_import.py
+conftest.py
+debug_import.py
+inspect_structure.py
+patch_cnpj_adapter.py
+refactor_imports.py
+run_task.py
+verify_aurora.py
+push_aurora_backup.ps1
+scripts/
+tests/
+alembic/
+eskb/event_log.jsonl
+assets/
+index.html
+modsecurity.conf
+nginx.conf
+pyrightconfig.json
+pytest.ini
+docker-compose.yml
+Dockerfile
+eskb-codigos.yaml
+eskb-projeto.yaml
+aurora-deepseek-config.yaml

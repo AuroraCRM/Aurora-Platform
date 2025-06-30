@@ -1,8 +1,8 @@
 # src/aurora_platform/api/v1/knowledge_router.py
 
 from fastapi import APIRouter, Depends, HTTPException
-from aurora.aurora_platform.schemas.knowledge_schemas import DocumentCreate, KnowledgeQuery, SearchResult
-from src.aurora_platform.services.knowledge_service import KnowledgeBaseService
+from aurora_platform.schemas.knowledge_schemas import DocumentCreate, KnowledgeQuery, SearchResult
+from aurora_platform.services.knowledge_service import KnowledgeBaseService
 
 router = APIRouter(
     prefix="/knowledge",
