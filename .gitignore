@@ -47,3 +47,5 @@ Thumbs.db\n# Banco de dados de teste\n*.db\n*.db-journal
 # Regras de segurança adicionais para credenciais
 credentials/
 *.json
+libs/*
+!libs/*.whl
