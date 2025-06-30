@@ -43,3 +43,7 @@ logs/
 .DS_Store
 Thumbs.db\n# Banco de dados de teste\n*.db\n*.db-journal
 \n# Log de eventos da Fábrica Aurora\nevent_log.jsonl
+
+# Regras de segurança adicionais para credenciais
+credentials/
+*.json
