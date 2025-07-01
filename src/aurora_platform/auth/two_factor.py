@@ -101,7 +101,7 @@ class TwoFactorAuth:
         # Gerar o QR code como imagem base64
         img = qrcode.make(totp_uri)
         buffered = io.BytesIO()
-        img.save(buffered, format="PNG")
+        img.save(buffered, "PNG")
         qrcode_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
         qrcode_uri = f"data:image/png;base64,{qrcode_base64}"
 

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Any, cast
 
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
@@ -10,7 +10,7 @@ class AzureKeyVault:
     """Integração com o Azure Key Vault para gerenciamento de segredos."""
 
     def __init__(self):
-        self.vault_url = settings.AZURE_KEY_VAULT_URI
+        self.vault_url = str(cast(Dict[str, Any], settings).get("AZURE_KEY_VAULT_URI", None))
         if self.vault_url:
             self.credential = DefaultAzureCredential()
             self.client = SecretClient(

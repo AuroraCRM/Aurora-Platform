@@ -2,16 +2,16 @@
 name = "aurora-platform"
 version = "0.1.0"
 description = "Plataforma Aurora - IA integrada com GCP e NLP"
-authors = ["Seu Nome <seu@email.com>"]
+authors = ["Seu Nome <rodrigo.winhaskI@AuroraCRM.com.br>"]
 packages = [{ include = "aurora_platform", from = "src" }]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13"
 transformers = "^4.49.0"
 torch = { version = "^2.2.0", source = "pytorch" } # ou usar "--index-url" no pip
 accelerate = "^0.29.0"
-sentencepiece = "^0.2.0"
+sentencepiece = { path = "libs/sentencepiece-0.2.1-cp313-cp313-win_amd64.whl" }
 sqlmodel = "^0.0.18"
 psycopg2-binary = "^2.9.10"
 google-cloud-aiplatform = "^1.100.0"
@@ -24,6 +24,15 @@ python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 pyyaml = "^6.0.1"
 qrcode = {extras = ["pil"], version = "^7.4.2"}
+faiss-cpu = "^1.11.0"
+chromadb = "^1.0.13"
+pyotp = "^2.9.0"
+redis = "^6.2.0"
+azure-identity = "^1.23.0"
+azure-keyvault-secrets = "^4.10.0"
+sentence-transformers = "^4.1.0"
+python-box = "^7.3.2"
+aioredis = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 alembic = "^1.13.1"
@@ -33,6 +42,9 @@ httpx = "^0.27.0"
 flake8 = "^7.1.0"
 bandit = "^1.7.9"
 mypy = "^1.11.0"
+pyright = "^1.1.402"
+libcst = "^1.8.2"
+pytest-asyncio = "^1.0.0"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

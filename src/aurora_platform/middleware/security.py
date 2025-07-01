@@ -1,10 +1,11 @@
 # src/aurora/middleware/security.py
 
+from typing import List, Dict, Any, cast
+
 from fastapi import Request, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 import logging
 import re
-from typing import List
 
 from aurora_platform.config import settings
 
@@ -21,17 +22,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         # Carrega as configurações do Dynaconf, com valores padrão de segurança.
         # "testserver" é incluído para que o TestClient do Pytest passe na validação de Host.
-        self.allowed_hosts: List[str] = settings.get(
+        self.allowed_hosts: List[str] = cast(Dict[str, Any], settings).get(
             "ALLOWED_HOSTS",
             ["localhost", "127.0.0.1", "testserver"],
         )
-        self.allowed_paths: List[str] = settings.get(
+        self.allowed_paths: List[str] = cast(Dict[str, Any], settings).get(
             "ALLOWED_PATHS",
             ["/api", "/docs", "/redoc", "/openapi.json", "/favicon.ico"],
         )
-        self.max_content_length: int = settings.get(
+        self.max_content_length: int = int(cast(Dict[str, Any], settings).get(
             "MAX_CONTENT_LENGTH", 10 * 1024 * 1024
-        )  # 10MB
+        ))  # 10MB
 
     async def dispatch(self, request: Request, call_next):
         try:

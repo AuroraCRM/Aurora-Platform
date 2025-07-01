@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Sequence
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
 
@@ -32,7 +32,7 @@ class LeadService:
         #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Lead com este email já existe.")
         return self.lead_repo.create(db_lead)
 
-    def get_all_leads(self, skip: int = 0, limit: int = 100) -> List[LeadDB]:
+    def get_all_leads(self, skip: int = 0, limit: int = 100) -> Sequence[LeadDB]:
         """Lista todos os leads."""
         return self.lead_repo.list_all(skip=skip, limit=limit)
 

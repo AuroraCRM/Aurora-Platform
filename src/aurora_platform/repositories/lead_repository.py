@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 from sqlmodel import Session, select # Removido SQLModel não usado diretamente
 
 from aurora_platform.models.lead_models import (
@@ -33,12 +33,12 @@ class LeadRepository:
         """Busca um lead pelo ID."""
         return self.db.get(LeadDB, lead_id)
 
-    def list_all(self, skip: int = 0, limit: int = 100) -> List[LeadDB]:
+    def list_all(self, skip: int = 0, limit: int = 100) -> Sequence[LeadDB]:
         """Lista todos os leads com paginação."""
         statement = (
             select(LeadDB).offset(skip).limit(limit)
         )  # Adicionar order_by se necessário
-        return self.db.exec(statement).all()
+        return list(self.db.exec(statement).all())
 
     def update(self, lead_id: int, lead_data: LeadUpdate) -> Optional[LeadDB]:
         """Atualiza um lead existente."""
@@ -74,14 +74,14 @@ class LeadRepository:
 
     def get_paginated(
         self, skip: int = 0, limit: int = 100
-    ) -> Tuple[List[LeadDB], int]:
+    ) -> Tuple[Sequence[LeadDB], int]:
         """Retorna uma lista paginada de leads e o total de registros."""
         items_statement = select(LeadDB).offset(skip).limit(limit)  # Adicionar order_by
-        items = self.db.exec(items_statement).all()
+        items = list(self.db.exec(items_statement).all())
 
         total_items_query = select(LeadDB)
         total = len(
-            self.db.exec(total_items_query).all()
+            list(self.db.exec(total_items_query).all())
         )  # Contagem simples, otimizar se necessário
 
         return items, total

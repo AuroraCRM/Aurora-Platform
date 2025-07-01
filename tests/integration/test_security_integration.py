@@ -3,8 +3,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, create_engine, SQLModel
 from aurora_platform.main import app
 from aurora_platform.database import get_session
-from aurora_platform.models.usuario_model import Usuario
-from aurora_platform.auth.security import get_password_hash, create_access_token, SECRET_KEY, ALGORITHM
+from aurora_platform.models import Usuario
+from aurora_platform.auth.security import get_password_hash, create_access_token, get_secret_key, get_algorithm
 from datetime import timedelta
 
 # Setup a test database
@@ -42,7 +42,7 @@ def test_user_data():
     }
 
 @pytest.fixture
-def create_test_user(session: Session, test_user_data: dict):
+def create_test_user(session: Session, test_user_data: dict) -> Usuario:
     hashed_password = get_password_hash(test_user_data["password"])
     user = Usuario(
         email=test_user_data["email"],
@@ -84,13 +84,13 @@ def test_get_current_user_success(client: TestClient, create_test_user: Usuario,
     access_token_data = {"sub": test_user_data["email"], "type": "access"}
     access_token = create_access_token(access_token_data, expires_delta=timedelta(minutes=30))
     headers = {"Authorization": f"Bearer {access_token}"}
-    response = client.get("/auth/users/me", headers=headers) # Assuming /auth/users/me is a protected endpoint
+    response = client.get("/auth/me", headers=headers) # Corrected endpoint to /auth/me
     assert response.status_code == 200
     assert response.json()["email"] == test_user_data["email"]
 
 def test_get_current_user_invalid_token(client: TestClient):
     headers = {"Authorization": "Bearer invalid_token"}
-    response = client.get("/auth/users/me", headers=headers)
+    response = client.get("/auth/me", headers=headers)
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"
 
@@ -99,7 +99,7 @@ def test_get_current_user_expired_token(client: TestClient, create_test_user: Us
     # Create an expired token
     expired_token = create_access_token(access_token_data, expires_delta=timedelta(minutes=-1))
     headers = {"Authorization": f"Bearer {expired_token}"}
-    response = client.get("/auth/users/me", headers=headers)
+    response = client.get("/auth/me", headers=headers)
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"
 
@@ -108,6 +108,6 @@ def test_get_current_user_wrong_token_type(client: TestClient, create_test_user:
     refresh_token_data = {"sub": test_user_data["email"], "type": "refresh"}
     refresh_token = create_access_token(refresh_token_data, expires_delta=timedelta(minutes=30))
     headers = {"Authorization": f"Bearer {refresh_token}"}
-    response = client.get("/auth/users/me", headers=headers)
+    response = client.get("/auth/me", headers=headers)
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"

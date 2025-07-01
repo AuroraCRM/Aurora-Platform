@@ -11,8 +11,8 @@ class CNPJService:
     def __init__(self):
         self.provider = CNPJaProvider()
 
-    def buscar_dados_cnpj(self, cnpj: str) -> dict:
+    async def buscar_dados_cnpj(self, cnpj: str) -> dict:
         """
         Consulta o CNPJ e retorna os dados obtidos.
         """
-        return self.provider.get_company_data(cnpj)
+        return (await self.provider.get_cnpj_data(cnpj))[0]

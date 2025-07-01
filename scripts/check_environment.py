@@ -3,6 +3,7 @@
 import sys
 import asyncio
 import logging
+import os
 
 # Configuração básica de logging para este script
 logging.basicConfig(
@@ -31,7 +32,7 @@ async def check_environment():
         import pydantic
         import sqlalchemy
         import httpx
-        import aioredis
+        import aioredis # type: ignore
 
         logging.info("Verificação de bibliotecas principais: OK")
         logging.info(f"  - FastAPI version: {fastapi.__version__}")

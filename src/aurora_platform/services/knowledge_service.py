@@ -1,5 +1,6 @@
 import chromadb
 from chromadb.utils import embedding_functions
+from typing import Any, cast, List
 
 class KnowledgeBaseService:
     """
@@ -16,7 +17,7 @@ class KnowledgeBaseService:
         
         self.collection = self.client.get_or_create_collection(
             name="aurora_documents",
-            embedding_function=self.embedding_function,
+            embedding_function=cast(Any, self.embedding_function),
             metadata={"hnsw:space": "cosine"}
         )
         print("Serviço da Base de Conhecimento pronto.")
@@ -30,11 +31,14 @@ class KnowledgeBaseService:
         )
         print(f"Documento '{doc_id}' adicionado/atualizado.")
 
-    def search(self, query_text: str, n_results: int = 3) -> list:
+    def search(self, query_text: str, n_results: int = 3) -> List[str]:
         """Busca os documentos mais relevantes para uma consulta."""
         print(f"Buscando por: '{query_text}'...")
         results = self.collection.query(
             query_texts=[query_text],
             n_results=n_results
         )
-        return results.get('documents', [])[0]
+        documents = results.get('documents', [])
+        if documents and documents[0]:
+            return documents[0]
+        return []

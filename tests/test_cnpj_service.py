@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 # A importação e o uso da classe foram corrigidos aqui
 from aurora_platform.services.cnpj_service import CNPJService
@@ -23,16 +23,18 @@ async def test_get_cnpj_data_success():
     mock_cnpj_provider = AsyncMock(spec=CNPJaProvider)
     mock_cnpj_provider.get_cnpj_data.return_value = (mock_provider_data, "CNPJa")
 
-    cnpj_service = CNPJService(cnpj_provider=mock_cnpj_provider)
-    
-    cnpj_str_to_test = "12345678000195"
-    result_schema, provider_name_a = await cnpj_service.get_cnpj_data(cnpj_str_to_test)
+    cnpj_service = CNPJService()
+    # Patch the internal provider of CNPJService
+    with patch('aurora_platform.services.cnpj_service.CNPJaProvider', return_value=mock_cnpj_provider):
+        cnpj_service = CNPJService()
+        cnpj_str_to_test = "12345678000195"
+        result_dict = await cnpj_service.buscar_dados_cnpj(cnpj_str_to_test)
 
-    mock_cnpj_provider.get_cnpj_data.assert_called_once_with(cnpj_str_to_test)
-    
-    # A verificação de tipo também foi corrigida aqui
-    assert isinstance(result_schema, CNPJResponseSchema) # NOME CORRIGIDO
-    assert result_schema.cnpj == mock_provider_data["cnpj"]
+        mock_cnpj_provider.get_cnpj_data.assert_called_once_with(cnpj_str_to_test)
+        
+        # A verificação de tipo também foi corrigida aqui
+        assert isinstance(result_dict, dict)
+        assert result_dict["cnpj"] == mock_provider_data["cnpj"]
 
 
 @pytest.mark.asyncio
@@ -44,10 +46,10 @@ async def test_get_cnpj_data_provider_raises_exception():
         "provider"
     )
 
-    cnpj_service = CNPJService(cnpj_provider=mock_cnpj_provider)
-
-    cnpj_to_test = "00000000000000"
-    with pytest.raises(HTTPException) as excinfo:
-        await cnpj_service.get_cnpj_data(cnpj_to_test)
-    
-    assert excinfo.value.status_code == 503
+    with patch('aurora_platform.services.cnpj_service.CNPJaProvider', return_value=mock_cnpj_provider):
+        cnpj_service = CNPJService()
+        cnpj_to_test = "00000000000000"
+        with pytest.raises(HTTPException) as excinfo:
+            await cnpj_service.buscar_dados_cnpj(cnpj_to_test)
+        
+        assert excinfo.value.status_code == 503

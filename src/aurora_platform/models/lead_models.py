@@ -25,8 +25,10 @@ class StatusLead(str, enum.Enum):
     PERDIDO = "perdido"
 
 
+from sqlalchemy.ext.declarative import declared_attr
+
 class LeadDB(SQLModel, table=True):
-    __tablename__ = "leads"
+    __tablename__: str = "leads" # type: ignore
 
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
     nome: str = Field(sa_column=Column(SQLString(100), nullable=False))

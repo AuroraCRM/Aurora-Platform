@@ -1,20 +1,15 @@
 {
-    "include": [
-        "src",
-        "tests",
-        "*.py"
-    ],
-    "exclude": [
-        "**/node_modules",
-        "**/__pycache__",
-        ".venv"
-    ],
-    "ignore": [
-        "src/aurora/models/cliente_models.py"
-    ],
-    "reportMissingImports": true,
-    "reportMissingTypeStubs": false,
-    "pythonVersion": "3.12",
-    "pythonPlatform": "Windows",
-    "typeCheckingMode": "basic"
+  "include": [
+    "src",
+    "tests"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    ".venv",
+    "scripts",
+    "sentencepiece"
+  ],
+  "reportMissingImports": "warning",
+  "reportUndefinedVariable": "warning"
 }

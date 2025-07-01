@@ -21,7 +21,7 @@ async def create_cliente(
 ):
     try:
         service = ServicoCRM(session)
-        cliente = await service.create_cliente_from_cnpj(cliente_in.cnpj)
+        cliente = service.create_cliente(cliente_in)
         return cliente
     except HTTPException as e:
         raise e

@@ -3,7 +3,7 @@
 # --- Importações da Biblioteca Padrão ---
 import json
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 # --- Importações de Terceiros ---
 import httpx
@@ -24,7 +24,7 @@ class CNPJaProvider:
     """
 
     def __init__(self):
-        self.base_url = settings.get("CNPJWS_PUBLIC_URL", "").rstrip("/")
+        self.base_url = str(cast(Dict[str, Any], settings).get("CNPJWS_PUBLIC_URL", "")).rstrip("/")
         if not self.base_url:
             raise ValueError("A URL da API (CNPJWS_PUBLIC_URL) não está configurada.")
 

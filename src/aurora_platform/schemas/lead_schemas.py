@@ -1,19 +1,19 @@
 # src/aurora/schemas/lead_schemas.py
 
-from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import Optional
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from typing import Union
 from datetime import datetime
 
 
 class LeadBase(BaseModel):
     nome: str
     email: EmailStr
-    telefone: Optional[str] = None
-    empresa: Optional[str] = None
-    cargo: Optional[str] = None
-    origem: Optional[str] = None
-    interesse: Optional[str] = None
-    observacoes: Optional[str] = None
+    telefone: Union[str, None] = Field(default=None)
+    empresa: Union[str, None] = Field(default=None)
+    cargo: Union[str, None] = Field(default=None)
+    origem: Union[str, None] = Field(default=None)
+    interesse: Union[str, None] = Field(default=None)
+    observacoes: Union[str, None] = Field(default=None)
 
 
 class LeadCreate(LeadBase):
@@ -21,15 +21,15 @@ class LeadCreate(LeadBase):
 
 
 class LeadUpdate(BaseModel):
-    nome: Optional[str] = None
-    email: Optional[EmailStr] = None
-    telefone: Optional[str] = None
-    empresa: Optional[str] = None
-    cargo: Optional[str] = None
-    origem: Optional[str] = None
-    interesse: Optional[str] = None
-    observacoes: Optional[str] = None
-    status: Optional[str] = None
+    nome: Union[str, None] = Field(default=None)
+    email: Union[EmailStr, None] = Field(default=None)
+    telefone: Union[str, None] = Field(default=None)
+    empresa: Union[str, None] = Field(default=None)
+    cargo: Union[str, None] = Field(default=None)
+    origem: Union[str, None] = Field(default=None)
+    interesse: Union[str, None] = Field(default=None)
+    observacoes: Union[str, None] = Field(default=None)
+    status: Union[str, None] = Field(default=None)
 
 
 class LeadRead(LeadBase):
@@ -38,4 +38,4 @@ class LeadRead(LeadBase):
     id: int
     status: str
     data_criacao: datetime
-    data_atualizacao: Optional[datetime] = None
+    data_atualizacao: Union[datetime, None] = Field(default=None)

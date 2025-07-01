@@ -10,7 +10,7 @@ class DocumentCreate(BaseModel):
 
 class KnowledgeQuery(BaseModel):
     query_text: str
-    n_results: int = 3
+    n_results: int = Field(default=3, json_schema_extra={"description": "Número de resultados a serem retornados", "example": 3})
 
 class SearchResult(BaseModel):
     results: List[str]

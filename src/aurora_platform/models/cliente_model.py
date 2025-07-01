@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class Cliente(SQLModel, table=True):
-    __tablename__ = "clientes"
+    __tablename__: str = "clientes" # type: ignore
 
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
     # ... (outros campos existentes)

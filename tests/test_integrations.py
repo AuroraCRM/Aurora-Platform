@@ -35,8 +35,8 @@ async def test_cnpj_provider_get_cnpj_data_success(monkeypatch):
     test_api_url = "https://fake-cnpj-ws.com/v1"
     # Dynaconf espera variáveis de ambiente com prefixo (ex: AURORA_).
     # O nome da variável em settings.get() é CNPJWS_PUBLIC_URL.
-    monkeypatch.setenv("AURORA_CNPJWS_PUBLIC_URL", test_api_url)
-    settings.reload()  # Forçar Dynaconf a recarregar com a nova env var
+    monkeypatch.setenv("AURORA_CNPJWS_PUBLIC_URL", test_api_url) # type: ignore
+    settings.reload() # type: ignore  # Forçar Dynaconf a recarregar com a nova env var
 
     # Criar um mock para a resposta HTTP de httpx.AsyncClient().get()
     mock_response = MagicMock(spec=httpx.Response)
@@ -84,8 +84,8 @@ async def test_cnpj_provider_get_cnpj_data_success(monkeypatch):
 async def test_cnpj_provider_http_error(monkeypatch):
     """Testa o tratamento de erro HTTP (ex: 404, 500) da API cnpj.ws."""
     test_api_url = "https://fake-cnpj-ws.com/v1"
-    monkeypatch.setenv("AURORA_CNPJWS_PUBLIC_URL", test_api_url)  # Usar setenv
-    settings.reload()  # Forçar Dynaconf a recarregar
+    monkeypatch.setenv("AURORA_CNPJWS_PUBLIC_URL", test_api_url) # type: ignore  # Usar setenv
+    settings.reload() # type: ignore  # Forçar Dynaconf a recarregar
 
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 404  # Simular um Not Found

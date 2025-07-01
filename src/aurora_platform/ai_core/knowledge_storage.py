@@ -28,7 +28,7 @@ class VectorKnowledgeBase:
 
     def __init__(self):
         # Inicializa um índice FAISS para busca de similaridade rápida
-        self.index = faiss.IndexFlatL2(EMBEDDING_DIM)
+        self.index = faiss.IndexFlatL2(EMBEDDING_DIM) # type: ignore
         self.entries: List[KnowledgeEntry] = []
 
     def add_entry(self, entry: KnowledgeEntry):
@@ -42,7 +42,7 @@ class VectorKnowledgeBase:
 
         # Adiciona o embedding ao índice FAISS
         embedding_np = np.array([entry.embedding]).astype("float32")
-        self.index.add(embedding_np)
+        self.index.add(embedding_np) # type: ignore
 
         # Armazena a entrada completa para recuperação de metadados
         self.entries.append(entry)
@@ -55,7 +55,7 @@ class VectorKnowledgeBase:
             return []
 
         query_np = np.array([query_embedding]).astype("float32")
-        distances, indices = self.index.search(query_np, k)
+        distances, indices = self.index.search(query_np, k) # type: ignore
 
         # Retorna as entradas completas correspondentes aos índices encontrados
         results = [self.entries[i] for i in indices[0] if i < len(self.entries)]

@@ -1,14 +1,14 @@
 # ATENÇÃO: ESTE É O CONTEÚDO FINAL E CORRIGIDO.
 # POR FAVOR, SUBSTITUA O ARQUIVO INTEIRO.
 
-from typing import Any, Dict # Removido Optional
+from typing import Any, Dict, cast
 import httpx
 from aurora_platform.config import settings
 
 # Obtém a URL base da API do provedor de CNPJ a partir das configurações
-CNPJA_BASE_URL = settings.get("CNPJA_API_URL", "https://api.cnpja.com.br/v1")
+CNPJA_BASE_URL = str(cast(Dict[str, Any], settings).get("CNPJA_API_URL", "https://api.cnpja.com.br/v1"))
 # Obtém o token de autenticação de forma segura
-API_TOKEN = settings.get("CNPJA_API_TOKEN")
+API_TOKEN = str(cast(Dict[str, Any], settings).get("CNPJA_API_TOKEN"))
 
 
 class CNPJaAdapter:

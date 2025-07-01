@@ -42,13 +42,11 @@ def test_lead_create_schema_missing_required_fields():
 
 def test_lead_create_schema_invalid_email():
     """Testa LeadCreate com email inválido."""
-    lead_data = {"nome": "Bad Email", "email": "not-an-email"}
+    lead_data = {"nome": "Bad Email", "email": "not-an-email", "status": StatusLead.NOVO}
     with pytest.raises(
         ValidationError
     ):  # Pydantic/SQLModel valida EmailStr implicitamente se o tipo for EmailStr
-        LeadCreate(
-            **lead_data
-        )  # Se email for apenas str, este teste pode não falhar na validação Pydantic
+        LeadCreate(**lead_data)
 
 
 # Testes para LeadRead (simples, mais para garantir que pode ser instanciado)

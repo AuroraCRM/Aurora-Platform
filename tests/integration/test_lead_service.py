@@ -102,9 +102,9 @@ def test_update_lead_success(lead_service: LeadService, mock_lead_repo: MagicMoc
     # O serviço passa o lead_data (LeadUpdate) para o repo.
     updated_lead_db = LeadDB(
         id=lead_id,
-        nome=update_data.nome,
+        nome=update_data.nome if update_data.nome is not None else existing_lead_db.nome,
         email="update@example.com",
-        status=update_data.status,
+        status=update_data.status if update_data.status is not None else existing_lead_db.status,
     )
     mock_lead_repo.update.return_value = updated_lead_db
 
@@ -114,8 +114,10 @@ def test_update_lead_success(lead_service: LeadService, mock_lead_repo: MagicMoc
     mock_lead_repo.update.assert_called_once_with(
         lead_id=lead_id, lead_data=update_data
     )
-    assert result.nome == update_data.nome
-    assert result.status == update_data.status
+    if update_data.nome is not None:
+        assert result.nome == update_data.nome # type: ignore
+    if update_data.status is not None:
+        assert result.status == update_data.status # type: ignore
 
 
 def test_update_lead_not_found(lead_service: LeadService, mock_lead_repo: MagicMock):

@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 
 class Usuario(SQLModel, table=True):
-    __tablename__ = "usuarios"
+    __tablename__ = "usuarios"  # type: ignore
 
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
     nome: Optional[str] = Field(default=None, sa_column=Column(SQLString(100)))

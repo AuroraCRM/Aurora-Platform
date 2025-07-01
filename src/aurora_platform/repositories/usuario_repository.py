@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Sequence
 from sqlmodel import Session, select, SQLModel, Field
 from fastapi import HTTPException
 

@@ -3,10 +3,6 @@ from starlette.testclient import TestClient
 import os
 from sqlmodel import create_engine, Session, SQLModel
 
-# Importar app principal para o TestClient e para obter a engine da aplicação
-from aurora_platform.main import app
-from aurora_platform.database import engine as app_engine  # Engine da aplicação
-
 # Importar todos os modelos para que SQLModel.metadata os conheça para create_all/drop_all
 from aurora_platform.models.usuario_model import Usuario
 from aurora_platform.models.cliente_model import Cliente
@@ -35,16 +31,17 @@ def environment_setup(monkeypatch):
 
     monkeypatch.setenv(
         "AURORA_CNPJWS_PUBLIC_URL", "https://fake-cnpj-ws-for-tests.com/v1"
-    )
+    ) # type: ignore
 
-    monkeypatch.setenv("JWT_SECRET_KEY", "test_secret_key_monkeypatched_for_tests")
-    monkeypatch.setenv("JWT_ALGORITHM", "HS256")
-    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
+    monkeypatch.setenv("AURORA_SECRET_KEY", "test_secret_key_monkeypatched_for_tests")
+    
 
     # Importar e recarregar settings DEPOIS que as monkeypatches de env foram aplicadas
     from aurora_platform.config import settings as app_settings
 
-    app_settings.reload()
+    app_settings.reload() # type: ignore
+    app_settings.ALGORITHM = "HS256"
+    app_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
     # Verificar se a app_engine está usando a DATABASE_URL de teste
     # Isso é um pouco implícito, pois a engine em database.py é criada na importação.
@@ -75,33 +72,47 @@ def environment_setup(monkeypatch):
     # pelo TestClient fará com que a engine da app use a URL correta.
     # E para a fixture db_session, usaremos a app_engine.
 
-    # Criar tabelas na engine da aplicação
-    SQLModel.metadata.drop_all(bind=app_engine)  # Limpar de execuções anteriores
-    SQLModel.metadata.create_all(bind=app_engine)
+    # Criar uma engine de teste local para esta fixture
+    test_engine = create_engine(test_db_url)
+    SQLModel.metadata.drop_all(bind=test_engine)  # Limpar de execuções anteriores
+    SQLModel.metadata.create_all(bind=test_engine)
 
-    yield  # Testes rodam aqui
+    yield test_engine  # Passar a engine de teste para as fixtures que a utilizam
 
     # Limpar tabelas após os testes da função
-    SQLModel.metadata.drop_all(bind=app_engine)
+    SQLModel.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture(scope="function")
-def test_client(environment_setup):
+def test_client(db_session):
     """
-    Cria uma instância do TestClient. Depende de environment_setup
+    Cria uma instância do TestClient. Depende de db_session
     para garantir que as variáveis de ambiente e o schema do BD estejam configurados.
     """
+    # Importar app aqui para garantir que as settings já foram carregadas
+    from aurora_platform.main import app
+    from aurora_platform.database import get_session
+
+    # Override the get_session dependency to use the test database session
+    def override_get_session():
+        yield db_session
+
+    app.dependency_overrides[get_session] = override_get_session
+
     with TestClient(app) as client_instance:
         yield client_instance
+
+    # Clear the dependency override after the test
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")
 def db_session(environment_setup):
     """
-    Fornece uma sessão de banco de dados de teste usando a engine da aplicação.
+    Fornece uma sessão de banco de dados de teste usando a engine criada em environment_setup.
     As tabelas já foram criadas/limpas por environment_setup.
     """
-    # Usar a mesma engine que a aplicação usa nos testes
-    with Session(app_engine) as session:
+    test_engine = environment_setup # environment_setup agora retorna a test_engine
+    with Session(test_engine) as session:
         yield session
     # A limpeza é feita em environment_setup

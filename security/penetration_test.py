@@ -13,7 +13,7 @@ import time
 import random
 import string
 import re
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class PenetrationTester:
     """Classe para realizar testes de penetração na API."""
 
-    def __init__(self, base_url: str, username: str = None, password: str = None):
+    def __init__(self, base_url: str, username: Optional[str] = None, password: Optional[str] = None):
         """
         Inicializa o testador de penetração.
 
@@ -119,8 +119,8 @@ class PenetrationTester:
         name: str,
         severity: str,
         description: str,
-        endpoint: str = None,
-        details: Any = None,
+        endpoint: Optional[str] = None,
+        details: Optional[Any] = None,
     ):
         """
         Adiciona uma vulnerabilidade à lista.
@@ -619,7 +619,7 @@ class PenetrationTester:
 
         # Salva o token atual
         original_token = self.token
-        original_headers = self.session.headers.copy()
+        original_headers = cast(Dict[str, str], self.session.headers).copy()
 
         # Remove o token de autenticação
         self.token = None
@@ -643,7 +643,7 @@ class PenetrationTester:
 
         # Restaura o token
         self.token = original_token
-        self.session.headers = original_headers
+        self.session.headers.update(original_headers)
 
     def test_privilege_escalation(self):
         """Testa escalação de privilégios."""

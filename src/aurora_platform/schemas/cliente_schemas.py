@@ -1,23 +1,25 @@
 # Caminho: C:\Users\winha\Aurora\Aurora-Platform\src\aurora_platform\schemas\cliente_schemas.py
 
-from pydantic import BaseModel, EmailStr, validator, constr
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic.functional_validators import field_validator
+from typing import Union
 import re
 
 
 class ClienteCreate(BaseModel):
-    razao_social: constr(min_length=3, max_length=100)
-    nome_fantasia: Optional[constr(max_length=100)] = None
-    cnpj: constr(min_length=14, max_length=18)
-    inscricao_estadual: Optional[constr(max_length=20)] = None
-    telefone: Optional[constr(max_length=20)] = None
-    email: Optional[EmailStr] = None
-    site: Optional[constr(max_length=100)] = None
-    segmento: Optional[constr(max_length=50)] = None
-    observacoes: Optional[str] = None
+    razao_social: str = Field(min_length=3, max_length=100)
+    nome_fantasia: Union[str, None] = Field(default=None, max_length=100)
+    cnpj: str = Field(min_length=14, max_length=18)
+    inscricao_estadual: Union[str, None] = Field(default=None, max_length=20)
+    telefone: Union[str, None] = Field(default=None, max_length=20)
+    email: Union[EmailStr, None] = Field(default=None)
+    site: Union[str, None] = Field(default=None, max_length=100)
+    segmento: Union[str, None] = Field(default=None, max_length=50)
+    observacoes: Union[str, None] = Field(default=None)
 
-    @validator('cnpj')
-    def validate_cnpj(cls, value):
+    @field_validator('cnpj')
+    @classmethod
+    def validate_cnpj(cls, value: str) -> str:
         if value:
             # Remove non-numeric characters
             cnpj_digits = re.sub(r'[^0-9]', '', value)
@@ -31,18 +33,19 @@ class ClienteCreate(BaseModel):
 
 
 class ClienteUpdate(BaseModel):
-    razao_social: Optional[constr(min_length=3, max_length=100)] = None
-    nome_fantasia: Optional[constr(max_length=100)] = None
-    cnpj: Optional[constr(min_length=14, max_length=18)] = None
-    inscricao_estadual: Optional[constr(max_length=20)] = None
-    telefone: Optional[constr(max_length=20)] = None
-    email: Optional[EmailStr] = None
-    site: Optional[constr(max_length=100)] = None
-    segmento: Optional[constr(max_length=50)] = None
-    observacoes: Optional[str] = None
+    razao_social: Union[str, None] = Field(default=None, min_length=3, max_length=100)
+    nome_fantasia: Union[str, None] = Field(default=None, max_length=100)
+    cnpj: Union[str, None] = Field(default=None, min_length=14, max_length=18)
+    inscricao_estadual: Union[str, None] = Field(default=None, max_length=20)
+    telefone: Union[str, None] = Field(default=None, max_length=20)
+    email: Union[EmailStr, None] = Field(default=None)
+    site: Union[str, None] = Field(default=None, max_length=100)
+    segmento: Union[str, None] = Field(default=None, max_length=50)
+    observacoes: Union[str, None] = Field(default=None)
 
-    @validator('cnpj')
-    def validate_cnpj(cls, value):
+    @field_validator('cnpj')
+    @classmethod
+    def validate_cnpj(cls, value: str) -> str:
         if value:
             # Remove non-numeric characters
             cnpj_digits = re.sub(r'[^0-9]', '', value)
@@ -59,8 +62,7 @@ class ClienteResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
-    telefone: Optional[str] = None
-    cnpj: Optional[str] = None
+    telefone: Union[str, None] = Field(default=None)
+    cnpj: Union[str, None] = Field(default=None)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

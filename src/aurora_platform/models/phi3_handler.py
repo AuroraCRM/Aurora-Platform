@@ -1,11 +1,12 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from aurora_platform.config import settings
 import torch
+from typing import Dict, Any, cast
 
 class Phi3Handler:
     def __init__(self):
-        self.model_name = settings.get("PHI3_MODEL_NAME", "microsoft/Phi-3-mini-4k-instruct")
-        self.trust_remote_code = settings.get("PHI3_TRUST_REMOTE_CODE", False)
+        self.model_name = str(cast(Dict[str, Any], settings).get("PHI3_MODEL_NAME", "microsoft/Phi-3-mini-4k-instruct"))
+        self.trust_remote_code = bool(cast(Dict[str, Any], settings).get("PHI3_TRUST_REMOTE_CODE", False))
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, trust_remote_code=self.trust_remote_code)
         self.model = AutoModelForCausalLM.from_pretrained(self.model_name, trust_remote_code=self.trust_remote_code, torch_dtype=torch.bfloat16, device_map="auto")

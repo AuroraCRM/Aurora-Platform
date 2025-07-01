@@ -2359,7 +2359,7 @@ python
 Copiar
 Editar
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlmodel import Session
 
 from aurora_platform.models.cliente_model import Cliente
 from aurora_platform.schemas.cliente_schemas import ClienteCreate, ClienteUpdate
@@ -2669,7 +2669,7 @@ from aurora_platform.repositories.cliente_repository import ClienteRepository
 from aurora_platform.schemas.cnpj_schema import CNPJResponseSchema
 from aurora_platform.services.cnpj_service import CNPJService  # Corrigido o nome da classe
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlmodel import Session
 
 
 class ServicoCRM:
@@ -2995,7 +2995,7 @@ Fix Response Model
 # Caminho completo: C:\Users\winha\Aurora\Aurora-Platform\src\aurora_platform\routers\cliente_router.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlmodel import Session
 
 from aurora_platform.models.cliente_model import Cliente as ClienteModel
 from aurora_platform.schemas.cliente_schemas import ClienteCreate, ClienteResponse

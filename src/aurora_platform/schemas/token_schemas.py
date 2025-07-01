@@ -1,11 +1,11 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Union
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
-    refresh_token: Optional[str] = None
+    refresh_token: Union[str, None] = Field(default=None)
 
 
 class TokenData(BaseModel):
@@ -14,6 +14,6 @@ class TokenData(BaseModel):
     tipicamente o 'sub' (subject/username) e outros campos.
     """
 
-    sub: Optional[str] = None  # 'sub' é o campo padrão para o identificador do usuário
+    sub: Union[str, None] = Field(default=None)  # 'sub' é o campo padrão para o identificador do usuário
     # Adicionar outros campos que você coloca no payload do token, se houver.
-    # Ex: type: Optional[str] = None (se você usar 'type' no payload como "access" ou "refresh")
+    # Ex: type: Union[str, None] = Field(default=None) (se você usar 'type' no payload como "access" ou "refresh")

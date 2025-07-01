@@ -5,7 +5,7 @@ from sqlmodel import SQLModel, Field
 # Propriedades compartilhadas por todos os schemas relacionados ao usuário
 class UsuarioBase(SQLModel):
     email: str = Field(unique=True, index=True, nullable=False)
-    nome: Optional[str] = None
+    nome: Optional[str] = Field(default=None)
     is_active: bool = True
     cliente_id: Optional[int] = Field(default=None, foreign_key="clientes.id")
 
@@ -22,17 +22,21 @@ class UsuarioInDBBase(UsuarioBase):
 
 
 # Propriedades para retornar ao cliente (não inclui hashed_password)
-class UsuarioRead(UsuarioBase):
+class UsuarioRead(SQLModel):
     id: int
+    email: str
+    nome: Optional[str]
+    is_active: bool
+    cliente_id: Optional[int]
 
 
 # Propriedades para atualizar um usuário
 class UsuarioUpdate(SQLModel):
-    email: Optional[str] = None
-    nome: Optional[str] = None
-    password: Optional[str] = None  # Para atualização de senha
-    is_active: Optional[bool] = None
-    cliente_id: Optional[int] = None
+    email: Optional[str] = Field(default=None)
+    nome: Optional[str] = Field(default=None)
+    password: Optional[str] = Field(default=None)  # Para atualização de senha
+    is_active: Optional[bool] = Field(default=None)
+    cliente_id: Optional[int] = Field(default=None)
 
 
 # Schema adicional que pode ser usado pelo repositório para criação interna

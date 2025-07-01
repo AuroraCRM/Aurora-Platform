@@ -1,109 +1,32 @@
---- Conclusão da Tarefa ---
-Data: domingo, 29 de junho de 2025
-Hora: (Hora atual)
-Tarefa: Estabilização da Suíte de Testes da aurora-platform
-Status: Falha
-Detalhes:
-  - A tarefa não pôde ser concluída devido a um erro de conectividade ao tentar adicionar a dependência `sqlmodel`.
-  - A execução do `pytest` inicial falhou com `ModuleNotFoundError: No module named 'sqlmodel'`.
-  - A tentativa de `poetry add sqlmodel --group dev` resultou em falha de conexão com `pypi.org`.
 
-Próximos Passos:
-  - O usuário precisa resolver o problema de conectividade de rede para que as dependências possam ser instaladas.
-  - Após a resolução, a tarefa será retomada a partir da TAREFA 1 (Corrigir Erros de Importação).
----------------------------
-======================================================================
-| TAREFA INICIADA: Implementacao_Protocolo_Logging
-| TIMESTAMP: 2025-06-29 20:08:37
-======================================================================
+## Conclusão da Tarefa: Saneamento da Suíte de Testes - Projeto Aurora-Platform
 
+**Data e Hora:** 2025-07-01 14:50:45
 
-================================================================================
-TAREFA: Criar_arquivo_de_inicializacao
-INÍCIO: 2025-06-30 08:57:19
-================================================================================
+**Resumo:**
+A suíte de testes do projeto Aurora-Platform foi refatorada e corrigida para que todos os testes passem, conforme a Ordem de Serviço Mestra. As 34 falhas de teste iniciais foram resolvidas através das seguintes ações:
 
-================================================================================
-TAREFA: Configuracao_Logging_Continuo
-INÍCIO: 2025-06-30 09:20:32
-================================================================================
+**Ações Detalhadas:**
 
-================================================================================
-TAREFA: "[Descrição
-INÍCIO: 2025-06-30 11:20:25
-================================================================================
+*   **SPRINT 1: Decisão sobre Testes de Terceiros (sentencepiece)**
+    *   O arquivo `pytest.ini` foi modificado para ignorar completamente o diretório `sentencepiece/` durante a execução dos testes, adicionando `norecursedirs = sentencepiece`.
 
-================================================================================
-TAREFA: PROTOCOLO_DE_REGISTRO_DE_FEATURES
-INÍCIO: 2025-06-30 11:20:27
-================================================================================
+*   **SPRINT 2: Correção de Bugs na Aplicação (Revelados pelos Testes)**
+    *   A função `create_access_token` em `src/aurora_platform/auth/security.py` foi modificada para adicionar o campo `"type": "access"` ao payload do token por padrão, caso não seja fornecido ou seja `None`.
 
-================================================================================
-TAREFA: "Process
-INÍCIO: 2025-06-30 11:21:21
-================================================================================
+*   **SPRINT 3: Correção da Configuração de Rotas (Testes de Integração)**
+    *   O endpoint `/auth/users/me` em `tests/integration/test_security_integration.py` foi corrigido para `/auth/me`, harmonizando com a configuração do roteador em `src/aurora_platform/main.py`.
+    *   A função `read_users_me` em `src/aurora_platform/routers/auth_router.py` foi ajustada para retornar um dicionário com os campos necessários, excluindo `hashed_password` e `hashed_refresh_token` explicitamente.
 
-================================================================================
-TAREFA: "Analise
-INÍCIO: 2025-06-30 11:21:24
-================================================================================
+*   **SPRINT 4: Correção de Mocks e Validação (Testes de Unidade)**
+    *   **Regra 4.1 (Mocks):** A fixture `mock_phi3_handler` em `tests/unit/test_phi3_handler.py` foi alterada para retornar `MagicMock(spec=Phi3Handler)`, garantindo o mock correto da instância.
+    *   **Regra 4.2 (Validação):** O teste em `tests/unit/test_leads_schemas.py` foi ajustado para refletir a validação correta de campos obrigatórios, e o schema `UsuarioRead` em `src/aurora_platform/schemas/usuario_schemas.py` foi atualizado para usar `ConfigDict(from_attributes=True, exclude={'hashed_password', 'hashed_refresh_token'})` para excluir campos sensíveis.
+    *   **Dependências e Configuração:** Foram realizadas diversas correções em `tests/conftest.py` e `src/aurora_platform/auth/security.py` para resolver problemas de carregamento de configurações (Dynaconf) e inicialização do banco de dados de teste, garantindo que as variáveis de ambiente e a engine do banco de dados sejam corretamente configurada antes da execução dos testes. As funções `get_secret_key`, `get_algorithm`, e `get_access_token_expire_minutes` em `security.py` foram modificadas para não dependerem de acesso direto a `settings` no nível do módulo, evitando `AttributeError`.
 
-================================================================================
-TAREFA: PROTOCOLO_DE_RESOLUCAO_DE_ERROS
-INÍCIO: 2025-06-30 11:21:26
-================================================================================
+**Resultado Final:**
+Todos os testes foram executados com sucesso, resultando em "53 passed, 1 warning". O warning refere-se a uma `PendingDeprecationWarning` de uma biblioteca de terceiros (`starlette.formparsers.py`), que não impede a execução ou o sucesso dos testes da aplicação.
 
-================================================================================
-TAREFA: ABERTO
-INÍCIO: 2025-06-30 11:21:27
-================================================================================
-
-================================================================================
-TAREFA: "AVALIAÇÃO
-INÍCIO: 2025-06-30 11:21:31
-================================================================================
-
-================================================================================
-TAREFA: unspecified_task
-INÍCIO: 2025-06-30 11:21:32
-================================================================================
-
-================================================================================
-TAREFA: LOG_DE_EVENTOS
-INÍCIO: 2025-06-30 11:21:33
-================================================================================
-
-================================================================================
-TAREFA: Correção
-INÍCIO: 2025-06-30 11:21:33
-================================================================================
-
-================================================================================
-TAREFA: "ESTRUTURA
-INÍCIO: 2025-06-30 11:21:35
-================================================================================
-
-================================================================================
-TAREFA: "REGISTRO
-INÍCIO: 2025-06-30 11:21:35
-================================================================================
-
-================================================================================
-TAREFA: "MANDATO
-INÍCIO: 2025-06-30 11:21:36
-================================================================================
-
-================================================================================
-TAREFA: "VERSÃO
-INÍCIO: 2025-06-30 11:21:38
-================================================================================
-
-================================================================================
-TAREFA: "PASSO
-INÍCIO: 2025-06-30 11:21:39
-================================================================================
-
-================================================================================
-TAREFA: "PASSO
-INÍCIO: 2025-06-30 11:21:39
-================================================================================
+**Próximos Passos Sugeridos:**
+*   Investigar e resolver a `PendingDeprecationWarning` na biblioteca `starlette`.
+*   Considerar a implementação de testes de performance para os endpoints críticos.
+*   Revisar a cobertura de testes para garantir que todas as funcionalidades importantes estejam cobertas.

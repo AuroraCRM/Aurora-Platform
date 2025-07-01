@@ -1,13 +1,14 @@
 from typing import Optional, Dict, Any
 from datetime import datetime
-from sqlmodel import Field, SQLModel, Column, JSON  # Para campos JSON
+from sqlmodel import Field, SQLModel, Column, JSON
+from sqlalchemy.ext.declarative import declared_attr
 
 # Placeholder para o modelo AIInteractionLog
 # A definição exata (campos, tipos) precisa ser fornecida conforme "o modelo que definimos".
 
 
 class AIInteractionLog(SQLModel, table=True):
-    __tablename__ = "ai_interaction_logs"
+    __tablename__: str = "ai_interaction_logs" # type: ignore
 
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
     timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)

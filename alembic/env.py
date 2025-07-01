@@ -30,27 +30,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# 4. Importação segura dos modelos
-try:
-    from aurora_platform.models.base import Base
-    print("✅ Importação de 'aurora_platform.models.base' bem-sucedida")
-    target_metadata = Base.metadata
-except ImportError as e:
-    print(f"❌ Erro na importação absoluta: {e}")
-    try:
-        # Tentativa de fallback com importação relativa
-        from ...src.aurora_platform.models.base import Base
-        print("⚠️ Usando importação relativa como fallback")
-        target_metadata = Base.metadata
-    except ImportError as e2:
-        print(f"❌❌ Erro duplo na importação:")
-        print(f"1. Absoluta: {e}")
-        print(f"2. Relativa: {e2}")
-        print("💡 Soluções possíveis:")
-        print("a) Execute 'poetry run pip install -e .' na raiz do projeto")
-        print("b) Verifique a estrutura de diretórios em 'src/aurora_platform'")
-        print("c) Confira se o arquivo base.py existe em 'src/aurora_platform/models/'")
-        raise e2
+# 4. Importação dos modelos
+from aurora_platform.models.base import Base # type: ignore
+print("✅ Importação de 'aurora_platform.models.base' bem-sucedida")
+target_metadata = Base.metadata
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
